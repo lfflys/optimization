@@ -24,12 +24,12 @@ public class Main {
 
 		final int CLOUD_SERVER_NUM = 10;
 		final int CLOUD_SECURITY_NUM = 4;
-		final double CLOUD_T_MIN = 3.0;
-		final double CLOUD_T_MAX = 4.0;
+		final double CLOUD_T_MIN = 0.0;
+		final double CLOUD_T_MAX = 20.0;
 		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
 		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1);
 		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
-		final double CLOUD_MIGRATION_COST = 100000.0;
+		final double CLOUD_MIGRATION_COST = 0.0;
 		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(1024, 2048, 4096, 8192);
 		final List <Integer> CLOUD_DISK_SIZE = Arrays.asList(1024, 2048, 4096);
 		final List <Integer> CLOUD_NETWORK_SIZE = Arrays.asList(10, 20, 30, 40);

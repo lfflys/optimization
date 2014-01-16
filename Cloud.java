@@ -99,6 +99,7 @@ public class Cloud implements Cloneable {
 				System.out.println("										" + server_list.get(i).vm_list.get(j).vm_id + "	");
 			}
 		}
+		System.out.println("Total cost:	" + total_cost);
 	}
 
 	public Object clone() {
