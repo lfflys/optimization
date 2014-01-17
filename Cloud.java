@@ -15,7 +15,7 @@ import java.lang.Math;
  * @author Tianwei Zhang
  * 
  */
-public class Cloud implements Cloneable {
+public class Cloud {
 
 	public int server_num;
 	
@@ -41,6 +41,10 @@ public class Cloud implements Cloneable {
 	public double t_max;
 
 	public List<Server> server_list;
+
+	public Cloud() {
+		server_list = new ArrayList<Server>();
+	}
 
 	public Cloud(
 			int ServerNum, 
@@ -83,6 +87,21 @@ public class Cloud implements Cloneable {
 		}
 	}
 
+	public void copy(Cloud src) {
+		server_num = src.server_num;
+		security_num = src.security_num;
+		t_min = src.t_min;
+		t_max = src.t_max;
+		total_cost = src.total_cost;
+
+		server_list.clear();
+		for (Server src_server: src.server_list){
+			Server dest_server = new Server();
+			dest_server.copy(src_server);
+			server_list.add(dest_server);
+		}
+	}
+
 	public void display_server() {
 		
 		System.out.println("id	Memory	usage	Disk	usage	Network	usage	Sec");
@@ -100,19 +119,5 @@ public class Cloud implements Cloneable {
 			}
 		}
 		System.out.println("Total cost:	" + total_cost);
-	}
-
-	public Object clone() {
-		Cloud sc = null;
-		try {
-			sc = (Cloud) super.clone();
-			sc.server_list = new ArrayList<Server>(server_list.size());
-			for (Server cur_server: server_list) {
-				sc.server_list.add((Server) cur_server.clone());
-			}
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return sc;
 	}
 }

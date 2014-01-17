@@ -15,7 +15,7 @@ import java.lang.Math;
  * @author Tianwei Zhang
  * 
  */
-public class VM implements Cloneable, Comparable<VM> {
+public class VM implements Comparable<VM> {
 
 	public int vm_id;
 
@@ -36,6 +36,8 @@ public class VM implements Cloneable, Comparable<VM> {
 
 	public double vm_runtime;
 
+	public VM() {}
+
 	public VM(
 			int VmId, 
 			int MemorySize,
@@ -51,15 +53,14 @@ public class VM implements Cloneable, Comparable<VM> {
 		vm_request = new Request(MemorySize, DiskSize, NetworkSize, SecurityLevel);
         }
 
-	public Object clone() {
-		VM sc = null;
-		try {
-			sc = (VM) super.clone();
-			sc.vm_request = (Request) vm_request.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return sc;
+	public void copy(VM src) {
+		vm_id = src.vm_id;
+		vm_state = src.vm_state;
+		vm_launchtime = src.vm_launchtime;
+		vm_resumetime = src.vm_resumetime;
+		vm_runtime = src.vm_runtime;
+		vm_request = new Request();
+		vm_request.copy(src.vm_request);
 	}
 
 	public int compareTo(VM arg0) {

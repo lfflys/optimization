@@ -15,11 +15,13 @@ import java.lang.Math;
  * @author Tianwei Zhang
  * 
  */
-public class Request implements Cloneable {
+public class Request {
 	public int memory_size;
 	public int disk_size;
 	public int network_size;
 	public int security_level;
+
+	public Request() {}
 
 	public Request(
 		int MemorySize,
@@ -33,13 +35,10 @@ public class Request implements Cloneable {
 		security_level = SecurityLevel;
 	}
 
-	public Object clone() {
-		Request sc = null;
-		try {
-			sc = (Request) super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return sc;
+	public void copy(Request src) {
+		memory_size = src.memory_size;
+		disk_size = src.disk_size;
+		network_size = src.network_size;
+		security_level = src.security_level;
 	}
 }

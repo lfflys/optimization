@@ -1,8 +1,3 @@
-////////// Important! Timing and Cost model is wrong. You need to re-consider them.
-
-
-
-
 /*
  * Title:        Allocation Algorithm.
  * Description:  Make decisions to select servers.
@@ -117,9 +112,8 @@ public class Optimization {
 
 		// Migration is needed to allocate the VM
 		if (static_index == -1) {
-			Cloud cloud_dynamic = (Cloud) cloud.clone();
-			Server dynamic_server = cloud_dynamic.server_list.get(dynamic_index);
-			cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_cost;
+			Server dynamic_server = cloud.server_list.get(dynamic_index);
+			cloud.total_cost = cloud.total_cost + dynamic_cost;
 			dynamic_server.memory_usage = dynamic_server.memory_usage + cur_request.memory_size;
 			dynamic_server.disk_usage = dynamic_server.disk_usage + cur_request.disk_size;
 			dynamic_server.network_usage = dynamic_server.network_usage + cur_request.network_size;
@@ -139,9 +133,9 @@ public class Optimization {
 					double cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
 							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
 							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * ((cloud.t_max + cloud.t_min)/2 - (cur_vm.vm_runtime + t_event - vm.vm_resumetime));
-					cloud_dynamic.total_cost = cloud_dynamic.total_cost - cur_vm_cost + cur_vm.vm_request.memory_size * dynamic_server.migration_cost;
+					cloud.total_cost = cloud.total_cost - cur_vm_cost + cur_vm.vm_request.memory_size * dynamic_server.migration_cost;
 
-					res = optimization(cloud_dynamic, cur_vm, t_event);
+					res = optimization(cloud, cur_vm, t_event);
 					if (res == -1) {
 						return -1;
 					}
@@ -150,17 +144,16 @@ public class Optimization {
 					break;
 				}
 			}
-			cloud = (Cloud) cloud_dynamic.clone();
 			return 1;
 		
 		}
 
 		if (static_index != dynamic_index) {
 
-			System.out.println("static cost: " + static_cost);
-			System.out.println("dynamic cost: " + dynamic_cost);
 
-			Cloud cloud_static = (Cloud) cloud.clone();
+			Cloud cloud_static = new Cloud();
+			cloud_static.copy(cloud);
+
 			cloud_static.total_cost = cloud_static.total_cost + static_cost;
 			Server static_server = cloud_static.server_list.get(static_index);
 			static_server.memory_usage = static_server.memory_usage + cur_request.memory_size;
@@ -168,7 +161,9 @@ public class Optimization {
 			static_server.network_usage = static_server.network_usage + cur_request.network_size;
 			static_server.vm_list.add(vm);
 
-			Cloud cloud_dynamic = (Cloud) cloud.clone();
+			Cloud cloud_dynamic = new Cloud();
+			cloud_dynamic.copy(cloud);
+
 			Server dynamic_server = cloud_dynamic.server_list.get(dynamic_index);
 			cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_cost;
 			dynamic_server.memory_usage = dynamic_server.memory_usage + cur_request.memory_size;
@@ -203,22 +198,21 @@ public class Optimization {
 				}
 			}
 
-			System.out.println("static cost: " + cloud_static.total_cost);
-			System.out.println("dynamic cost: " + cloud_dynamic.total_cost);
+			System.out.println("static cost: " + static_cost);
+			System.out.println("dynamic cost: " + dynamic_cost);
 
-			System.out.println("static cloud:");
+			System.out.println("static cloud:	");
 			cloud_static.display_server();
-			System.out.println("dynamic cloud:");
+
+			System.out.println("dynamic cloud:	");
 			cloud_dynamic.display_server();
-			
 
 			if ((res == -1) || (cloud_static.total_cost <= cloud_dynamic.total_cost)) {
-				
-				cloud = (Cloud) cloud_static.clone();
+				cloud.copy(cloud_static);
 				return 0;
 			}
 			else {
-				cloud = (Cloud) cloud_dynamic.clone();
+				cloud.copy(cloud_dynamic);
 				return 1;
 			}
 		}

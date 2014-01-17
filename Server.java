@@ -15,7 +15,7 @@ import java.lang.Math;
  * @author Tianwei Zhang
  * 
  */
-public class Server implements Cloneable {
+public class Server {
 	public int server_id;
 	public int memory_size;
 	public int disk_size;
@@ -32,6 +32,10 @@ public class Server implements Cloneable {
 	public int network_usage;
 
 	public List<VM> vm_list;
+
+	public Server() {
+		vm_list = new ArrayList<VM>();
+	}
 
 	public Server(
 			int ServerId,
@@ -60,18 +64,28 @@ public class Server implements Cloneable {
 		
 		vm_list = new ArrayList<VM>();
 	}
+	
+	public void copy(Server src) {
+		server_id = src.server_id;
+		memory_size = src.memory_size;
+		disk_size = src.disk_size;
+		network_size = src.network_size;
+		security_level = src.security_level;
 
-	public Object clone() {
-		Server sc = null;
-		try {
-			sc = (Server) super.clone();
-			sc.vm_list = new ArrayList<VM> (vm_list.size());
-			for (VM cur_vm: vm_list){
-				sc.vm_list.add((VM)cur_vm.clone());
-			}
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+		memory_cost = src.memory_cost;
+		disk_cost = src.disk_cost;
+		network_cost = src.network_cost;
+		migration_cost = src.migration_cost;
+
+		memory_usage = src.memory_usage;
+		disk_usage = src.disk_usage;
+		network_usage = src.network_usage;
+
+		vm_list.clear();
+		for (VM src_vm: src.vm_list){
+			VM dest_vm = new VM();
+			dest_vm.copy(src_vm);
+			vm_list.add(dest_vm);
 		}
-		return sc;
 	}
 }
