@@ -49,10 +49,10 @@ public class Optimization {
 
 	/**
  	 * 
- 	 * optimization tries to find the best server to locate the machines
- 	 * 
+ 	 * optimization_launch tries to find the best server to locate the machines
+ 	 *
  	 */
-	public int optimization(Cloud cloud, VM vm, double t_event) {
+	public int optimization_launch(Cloud cloud, VM vm, double t_event) {
 
 		// Make sure static_cost and dynamic_cost is large enough.
 		double static_cost = 100000000.0;
@@ -162,7 +162,7 @@ public class Optimization {
 					cloud.expect_cost = cloud.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
 					cloud.total_cost = cloud.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
 
-					res = optimization(cloud, cur_vm, t_event);
+					res = optimization_launch(cloud, cur_vm, t_event);
 					if (res == -1) {
 						return -1;
 					}
@@ -216,7 +216,7 @@ public class Optimization {
 					cloud_dynamic.expect_cost = cloud_dynamic.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
 					cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
 
-					res = optimization(cloud_dynamic, cur_vm, t_event);
+					res = optimization_launch(cloud_dynamic, cur_vm, t_event);
 
 					if (res == -1) {
 						break;
@@ -240,4 +240,41 @@ public class Optimization {
 		}
 		return -1;
 	}
+
+
+	/**
+	 *
+	 * optimization_terminate tries to shutdown a VM; 
+	 * right now just shutdown without any optimization;
+	 * If performs optimization, needs to find other VMs that can migrate to this server;
+	 * This is a huge cost: O(vm_num);
+	 * Another reason is without optimization, this can leave some bugs for the customer to game.
+	 *
+	 */
+	public int optimization_terminate(Cloud cloud, int vm_id, double t_event) {
+		int res = -1;
+		for (Server cur_server: cloud.server_list) {
+			for (VM cur_vm: cur_server.vm_list) {
+				if (cur_vm.vm_id == vm_id){
+					cur_server.memory_size = cur_server.memory_size - cur_vm.vm_request.memory_size;
+					cur_server.disk_size = cur_server.disk_size - cur_vm.vm_request.disk_size;
+					cur_server.network_size = cur_server.network_size - cur_vm.vm_request.network_size;
+					
+					cur_server.vm_list.remove(cur_vm);
+
+					res = 0;
+					break;
+				}
+			}
+			if (res == 0) {
+				break;
+			}
+		}
+		
+		return res;
+	}
+
 }
+
+
+

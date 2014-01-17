@@ -62,45 +62,73 @@ public class Main {
 		System.out.println("******************** Simulation begin ********************");
 
 		while (true) {
+			System.out.println("Select Actions:");
+			System.out.println("1. Launch VMs;");
+			System.out.println("2. Terminate VMs;");
+			System.out.println("3. Suspend VMs");
+			System.out.println("4. Change VM requirements;");
 
-			System.out.println("Launch time:");
-			in = new Scanner(System.in);
-			double time = in.nextDouble();
 
-			System.out.println("VM number:");
 			in = new Scanner(System.in);
-			int vm_num = in.nextInt();
+			double selection = in.nextInt();
+			if (selection == 1) {
 
-			System.out.println("Memory size:");
-			in = new Scanner(System.in);
-			int memory_size = in.nextInt();
+				System.out.println("Event time:");
+				in = new Scanner(System.in);
+				double time = in.nextDouble();
+
+				System.out.println("VM number:");
+				in = new Scanner(System.in);
+				int vm_num = in.nextInt();
+
+				System.out.println("Memory size:");
+				in = new Scanner(System.in);
+				int memory_size = in.nextInt();
 		
-			System.out.println("Disk size:");
-			in = new Scanner(System.in);
-			int disk_size = in.nextInt();
+				System.out.println("Disk size:");
+				in = new Scanner(System.in);
+				int disk_size = in.nextInt();
 		
-			System.out.println("Network size:");
-			in = new Scanner(System.in);
-			int network_size = in.nextInt();
+				System.out.println("Network size:");
+				in = new Scanner(System.in);
+				int network_size = in.nextInt();
 		
-			System.out.println("Security Level:");
-			in = new Scanner(System.in);
-			int security_level = in.nextInt();
+				System.out.println("Security Level:");
+				in = new Scanner(System.in);
+				int security_level = in.nextInt();
 
-			System.out.println("Begin VM allocation......");
+				System.out.println("Begin VM Launching......");
 
-			optimizer.energy_update(cloud, time);
+				optimizer.energy_update(cloud, time);
 
-			for (int i = 0; i < vm_num; i++) {
-				VM vm = new VM(vmid, memory_size, disk_size, network_size, security_level, time);
-				vmid = vmid + 1;
-				res = optimizer.optimization(cloud, vm, time);
-				if (res == -1) {
-					System.out.println("Failed to allocate VMs");
-					break;
+				for (int i = 0; i < vm_num; i++) {
+					VM vm = new VM(vmid, memory_size, disk_size, network_size, security_level, time);
+					vmid = vmid + 1;
+					res = optimizer.optimization_launch(cloud, vm, time);
+					if (res == -1) {
+						System.out.println("Failed to launch VMs");
+					}
 				}
+				cloud.display_server();
 			}
-			cloud.display_server();
+
+			if (selection == 2) {
+				System.out.println("Event time:");
+				in = new Scanner(System.in);
+				double time = in.nextDouble();
+
+				System.out.println("VM ID:");
+				in = new Scanner(System.in);
+				int vm_id = in.nextInt();
+				
+				System.out.println("Begin VM Termination......");
+				optimizer.energy_update(cloud, time);
+				res = optimizer.optimization_terminate(cloud, vm_id, time);
+				if (res == -1) {
+					System.out.println("Failed to terminate VMs");
+				}
+				cloud.display_server();
+			}
 		}
 	}
 }
