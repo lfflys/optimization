@@ -29,7 +29,7 @@ public class Main {
 		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
 		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1);
 		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
-		final double CLOUD_MIGRATION_COST = 0.0;
+		final double CLOUD_MIGRATION_COST = 1000000.0;
 		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(1024, 2048, 4096, 8192);
 		final List <Integer> CLOUD_DISK_SIZE = Arrays.asList(1024, 2048, 4096);
 		final List <Integer> CLOUD_NETWORK_SIZE = Arrays.asList(10, 20, 30, 40);
@@ -128,6 +128,38 @@ public class Main {
 					System.out.println("Failed to terminate VMs");
 				}
 				cloud.display_server();
+			}
+
+			if (selection == 4) {
+				System.out.println("Event time:");
+				in = new Scanner(System.in);
+				double time = in.nextDouble();
+
+				System.out.println("VM ID:");
+				in = new Scanner(System.in);
+				int vm_id = in.nextInt();
+
+				System.out.println("Memory size:");
+				in = new Scanner(System.in);
+				int memory_size = in.nextInt();
+		
+				System.out.println("Disk size:");
+				in = new Scanner(System.in);
+				int disk_size = in.nextInt();
+		
+				System.out.println("Network size:");
+				in = new Scanner(System.in);
+				int network_size = in.nextInt();
+		
+				System.out.println("Security Level:");
+				in = new Scanner(System.in);
+				int security_level = in.nextInt();
+
+				System.out.println("Begin VM Requirement Changing......");
+				optimizer.energy_update(cloud, time);
+				res = optimizer.optimization_change(cloud, vm_id, memory_size, disk_size, network_size, security_level, time);
+				cloud.display_server();
+				
 			}
 		}
 	}

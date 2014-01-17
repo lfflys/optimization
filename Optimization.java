@@ -159,8 +159,8 @@ public class Optimization {
 							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
 							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
 
-					cloud.expect_cost = cloud.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
-					cloud.total_cost = cloud.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
+					cloud.expect_cost = cloud.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
+					cloud.total_cost = cloud.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
 
 					res = optimization_launch(cloud, cur_vm, t_event);
 					if (res == -1) {
@@ -213,8 +213,8 @@ public class Optimization {
 							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
 							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
 
-					cloud_dynamic.expect_cost = cloud_dynamic.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
-					cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
+					cloud_dynamic.expect_cost = cloud_dynamic.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
+					cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
 
 					res = optimization_launch(cloud_dynamic, cur_vm, t_event);
 
@@ -227,8 +227,6 @@ public class Optimization {
 				}
 			}
 
-			System.out.println("static cost:	" + cloud_static.expect_cost);
-			System.out.println("dynamic cost:	" + cloud_dynamic.expect_cost);
 			if ((res == -1) || (cloud_static.expect_cost <= cloud_dynamic.expect_cost)) {
 				cloud.copy(cloud_static);
 				return 0;
@@ -274,7 +272,87 @@ public class Optimization {
 		return res;
 	}
 
+	/**
+	 *
+	 * optimization_change tries to change the VM's requirements and (or) reallocate them.
+	 *
+	 */
+	public int optimization_change(Cloud cloud, int vm_id, int memory_size, int disk_size, int network_size, int security_level, double t_event) {
+		int res = -1;
+		int i = 0;
+		int j = 0;
+		for (i = 0; i < cloud.server_list.size(); i ++) {
+			for (j = 0; j < cloud.server_list.get(i).vm_list.size(); j ++) {
+				if (cloud.server_list.get(i).vm_list.get(j).vm_id == vm_id) {
+					res = 0;
+					break;
+				}
+			}
+			if (res == 0) {
+				break;
+			}
+		}
+
+		// cannot find VM with such vm_id
+		if (res == -1) {
+			return -1;
+		}
+
+		Server cur_server = cloud.server_list.get(i);
+		VM cur_vm = cur_server.vm_list.get(j);
+
+		cur_server.memory_usage = cur_server.memory_usage - cur_vm.vm_request.memory_size;
+		cur_server.disk_usage = cur_server.disk_usage - cur_vm.vm_request.disk_size;
+		cur_server.network_usage = cur_server.network_usage - cur_vm.vm_request.network_size;
+
+		double cur_migration_cost = cur_vm.vm_request.memory_size * cur_server.migration_cost;
+		
+		cur_vm.vm_request.memory_size = memory_size;
+		cur_vm.vm_request.disk_size = disk_size;
+		cur_vm.vm_request.network_size = network_size;
+		cur_vm.vm_request.security_level = security_level;
+
+		cur_server.vm_list.remove(cur_vm);
+		Cloud cloud_dynamic = new Cloud();
+		cloud_dynamic.copy(cloud);
+
+		VM vm_dynamic = new VM();
+		vm_dynamic.copy(cur_vm);
+
+		double expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
+		double cur_vm_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost + 
+				       cur_vm.vm_request.disk_size * cur_server.disk_cost + 
+				       cur_vm.vm_request.network_size * cur_server.network_cost ) * expect_time;
+
+		cloud.expect_cost = cur_vm_cost;
+		cur_server.vm_list.add(cur_vm);
+
+		cloud_dynamic.total_cost = cloud_dynamic.total_cost + cur_migration_cost;
+		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost + cur_migration_cost;
+		res = optimization_launch(cloud_dynamic, vm_dynamic, t_event);
+
+		// the original server cannot satisfy the vm's requirement any more.
+		if ( (cur_vm.vm_request.memory_size > (cur_server.memory_size - cur_server.memory_usage)) ||
+		     (cur_vm.vm_request.disk_size > (cur_server.disk_size - cur_server.disk_usage)) ||
+		     (cur_vm.vm_request.network_size > (cur_server.network_size - cur_server.network_usage)) ||
+		     (cur_vm.vm_request.security_level > cur_server.security_level) ) {
+			if (res == -1) {
+				return -1;
+			}
+			cloud.copy(cloud_dynamic);
+			return 0;
+		}
+
+		// the original server can still satisfy the vm's requirement, need to consider whether to migrate or not.
+
+		if ((res == -1)||(cloud.expect_cost < cloud_dynamic.expect_cost)) {
+			return 0;
+		}
+		else {
+			cloud.copy(cloud_dynamic);
+			return 0;
+		}
+
+	}
+
 }
-
-
-
