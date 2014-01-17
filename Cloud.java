@@ -22,6 +22,8 @@ public class Cloud {
 	public int security_num;
 
 	public double total_cost;
+	
+	public double expect_cost;
 
 	/*
 	 * Assuming the vm runtime satisfy the normal distribution N(t_avg, t_var)
@@ -64,6 +66,7 @@ public class Cloud {
 		t_min = TMin;
 		t_max = TMax;
 		total_cost = 0.0;	
+		expect_cost = 0.0;
 	
 		set_server_list(MemoryCost, DiskCost, NetworkCost, MigrationCost, MemorySize, DiskSize, NetworkSize);
         }
@@ -93,6 +96,7 @@ public class Cloud {
 		t_min = src.t_min;
 		t_max = src.t_max;
 		total_cost = src.total_cost;
+		expect_cost = src.expect_cost;
 
 		server_list.clear();
 		for (Server src_server: src.server_list){
@@ -115,7 +119,7 @@ public class Cloud {
 					   server_list.get(i).network_usage + "	" + 
 					   server_list.get(i).security_level + "	" );
 			for (int j = 0; j < server_list.get(i).vm_list.size(); j ++){
-				System.out.println("										" + server_list.get(i).vm_list.get(j).vm_id + "	");
+				System.out.println("										" + server_list.get(i).vm_list.get(j).vm_id + "	" + server_list.get(i).vm_list.get(j).vm_runtime);
 			}
 		}
 		System.out.println("Total cost:	" + total_cost);

@@ -25,6 +25,29 @@ import java.io.IOException;
 public class Optimization {
 
 	/**
+	 *
+	 * energy_update tries to update the total_cost and expect_cost in the cloud
+	 * right now, it does not consider the event of resumation or termination.
+	 */
+
+	public void energy_update(Cloud cloud, double t_event) {
+
+		for (Server cur_server: cloud.server_list) {
+			for (VM cur_vm: cur_server.vm_list) {
+				double cur_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost +
+						    cur_vm.vm_request.disk_size * cur_server.disk_cost +
+						    cur_vm.vm_request.network_size * cur_server.network_cost ) * (t_event - cur_vm.vm_resumetime);
+				cloud.total_cost = cloud.total_cost + cur_cost;
+
+				cur_vm.vm_runtime = cur_vm.vm_runtime + t_event - cur_vm.vm_resumetime;
+				cur_vm.vm_resumetime = t_event;
+			}
+		}
+
+		cloud.expect_cost = 0;
+	}
+
+	/**
  	 * 
  	 * optimization tries to find the best server to locate the machines
  	 * 
@@ -56,9 +79,10 @@ public class Optimization {
 					}
 				}
 
+				double expect_time = vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * vm.vm_runtime)/2 : (cloud.t_max - vm.vm_runtime)/2;
 				double cost = ( cur_request.memory_size * cur_server.memory_cost + 
 					        cur_request.disk_size * cur_server.disk_cost + 
-					        cur_request.network_size * cur_server.network_cost ) * ((cloud.t_max + cloud.t_min)/2 - (vm.vm_runtime + t_event - vm.vm_resumetime));
+					        cur_request.network_size * cur_server.network_cost ) * expect_time;
 
 				if ( (stay_memory <= cur_server.memory_size) && 
 				     (stay_disk <= cur_server.disk_size) &&
@@ -100,7 +124,7 @@ public class Optimization {
 
 		// No migration is needed to allocate the VM.
 		if (static_index == dynamic_index) {
-			cloud.total_cost = cloud.total_cost + static_cost;
+			cloud.expect_cost = cloud.expect_cost + static_cost;
 			Server static_server = cloud.server_list.get(static_index);
 			static_server.memory_usage = static_server.memory_usage + cur_request.memory_size;
 			static_server.disk_usage = static_server.disk_usage + cur_request.disk_size;
@@ -113,7 +137,7 @@ public class Optimization {
 		// Migration is needed to allocate the VM
 		if (static_index == -1) {
 			Server dynamic_server = cloud.server_list.get(dynamic_index);
-			cloud.total_cost = cloud.total_cost + dynamic_cost;
+			cloud.expect_cost = cloud.expect_cost + dynamic_cost;
 			dynamic_server.memory_usage = dynamic_server.memory_usage + cur_request.memory_size;
 			dynamic_server.disk_usage = dynamic_server.disk_usage + cur_request.disk_size;
 			dynamic_server.network_usage = dynamic_server.network_usage + cur_request.network_size;
@@ -130,10 +154,13 @@ public class Optimization {
 					dynamic_server.network_usage = dynamic_server.network_usage - cur_vm.vm_request.network_size;
 					dynamic_server.vm_list.remove(cur_vm);
 	
+					double expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
 					double cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
 							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
-							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * ((cloud.t_max + cloud.t_min)/2 - (cur_vm.vm_runtime + t_event - vm.vm_resumetime));
-					cloud.total_cost = cloud.total_cost - cur_vm_cost + cur_vm.vm_request.memory_size * dynamic_server.migration_cost;
+							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
+
+					cloud.expect_cost = cloud.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
+					cloud.total_cost = cloud.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
 
 					res = optimization(cloud, cur_vm, t_event);
 					if (res == -1) {
@@ -150,11 +177,10 @@ public class Optimization {
 
 		if (static_index != dynamic_index) {
 
-
 			Cloud cloud_static = new Cloud();
 			cloud_static.copy(cloud);
 
-			cloud_static.total_cost = cloud_static.total_cost + static_cost;
+			cloud_static.expect_cost = cloud_static.expect_cost + static_cost;
 			Server static_server = cloud_static.server_list.get(static_index);
 			static_server.memory_usage = static_server.memory_usage + cur_request.memory_size;
 			static_server.disk_usage = static_server.disk_usage + cur_request.disk_size;
@@ -165,7 +191,7 @@ public class Optimization {
 			cloud_dynamic.copy(cloud);
 
 			Server dynamic_server = cloud_dynamic.server_list.get(dynamic_index);
-			cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_cost;
+			cloud_dynamic.expect_cost = cloud_dynamic.expect_cost + dynamic_cost;
 			dynamic_server.memory_usage = dynamic_server.memory_usage + cur_request.memory_size;
 			dynamic_server.disk_usage = dynamic_server.disk_usage + cur_request.disk_size;
 			dynamic_server.network_usage = dynamic_server.network_usage + cur_request.network_size;
@@ -182,10 +208,13 @@ public class Optimization {
 					dynamic_server.network_usage = dynamic_server.network_usage - cur_vm.vm_request.network_size;
 					dynamic_server.vm_list.remove(cur_vm);
 
+					double expect_time = cur_vm.vm_runtime < cloud_dynamic.t_min ? (cloud_dynamic.t_max + cloud_dynamic.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud_dynamic.t_max - cur_vm.vm_runtime)/2;
 					double cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
 							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
-							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * ((cloud.t_max + cloud.t_min)/2 - (cur_vm.vm_runtime + t_event - vm.vm_resumetime));
-					cloud_dynamic.total_cost = cloud_dynamic.total_cost - cur_vm_cost + cur_vm.vm_request.memory_size * dynamic_server.migration_cost;
+							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
+
+					cloud_dynamic.expect_cost = cloud_dynamic.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
+					cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;;
 
 					res = optimization(cloud_dynamic, cur_vm, t_event);
 
@@ -198,16 +227,9 @@ public class Optimization {
 				}
 			}
 
-			System.out.println("static cost: " + static_cost);
-			System.out.println("dynamic cost: " + dynamic_cost);
-
-			System.out.println("static cloud:	");
-			cloud_static.display_server();
-
-			System.out.println("dynamic cloud:	");
-			cloud_dynamic.display_server();
-
-			if ((res == -1) || (cloud_static.total_cost <= cloud_dynamic.total_cost)) {
+			System.out.println("static cost:	" + cloud_static.expect_cost);
+			System.out.println("dynamic cost:	" + cloud_dynamic.expect_cost);
+			if ((res == -1) || (cloud_static.expect_cost <= cloud_dynamic.expect_cost)) {
 				cloud.copy(cloud_static);
 				return 0;
 			}
