@@ -42,7 +42,7 @@ public class Optimization {
 					cur_vm.vm_runtime = cur_vm.vm_runtime + t_event - cur_vm.vm_resumetime;
 				}
 				if (cur_vm.vm_state == 2) {
-					cur_cost = cur_vm.vm_request.memory_size * (t_event - cur_vm.vm_resumetime);
+					cur_cost = cur_vm.vm_request.memory_size * cur_server.memory_cost * (t_event - cur_vm.vm_resumetime);
 					cur_vm.vm_suspendtime = cur_vm.vm_suspendtime + t_event - cur_vm.vm_resumetime;
 				}
 
@@ -73,7 +73,7 @@ public class Optimization {
 
 		for (int i = 0; i < cloud.server_num; i ++) {
 			Server cur_server = cloud.server_list.get(i);
-			if (cur_request.security_level <= cur_server.security_level) {
+			if ( (vm.vm_state == 2) || (cur_request.security_level <= cur_server.security_level) ) {
 
 				int stay_memory = cur_request.memory_size;
 				int stay_disk = cur_request.disk_size;
@@ -86,10 +86,18 @@ public class Optimization {
 					}
 				}
 
-				double expect_time = vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * vm.vm_runtime)/2 : (cloud.t_max - vm.vm_runtime)/2;
-				double cost = ( cur_request.memory_size * cur_server.memory_cost + 
-					        cur_request.disk_size * cur_server.disk_cost + 
-					        cur_request.network_size * cur_server.network_cost ) * expect_time;
+				double cost = 0.0;
+				double expect_time = 0.0;
+				if (vm.vm_state == 1) {
+					expect_time = vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * vm.vm_runtime)/2 : (cloud.t_max - vm.vm_runtime)/2;
+					cost = ( cur_request.memory_size * cur_server.memory_cost + 
+						 cur_request.disk_size * cur_server.disk_cost + 
+						 cur_request.network_size * cur_server.network_cost ) * expect_time;
+				}
+				if (vm.vm_state == 2) {
+					expect_time = vm.vm_suspendtime < cloud.st_min ? (cloud.st_max + cloud.st_min - 2 * vm.vm_suspendtime)/2 : (cloud.st_max - vm.vm_suspendtime)/2;
+					cost = cur_request.memory_size * cur_server.memory_cost * expect_time;
+				}
 
 				if ( (stay_memory <= cur_server.memory_size) && 
 				     (stay_disk <= cur_server.disk_size) &&
@@ -160,11 +168,19 @@ public class Optimization {
 					dynamic_server.disk_usage = dynamic_server.disk_usage - cur_vm.vm_request.disk_size;
 					dynamic_server.network_usage = dynamic_server.network_usage - cur_vm.vm_request.network_size;
 					dynamic_server.vm_list.remove(cur_vm);
-	
-					double expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
-					double cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
-							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
-							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
+				
+					double cur_vm_cost = 0.0;
+					double expect_time = 0.0;
+					if (cur_vm.vm_state == 1) {
+						expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
+						cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
+								cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
+								cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
+					}
+					if (cur_vm.vm_state == 2) {
+						expect_time = cur_vm.vm_suspendtime < cloud.st_min ? (cloud.st_max + cloud.st_min - 2 * cur_vm.vm_suspendtime)/2 : (cloud.st_max - cur_vm.vm_suspendtime)/2;
+						cur_vm_cost = cur_vm.vm_request.memory_size * dynamic_server.memory_cost * expect_time;
+					}
 
 					cloud.expect_cost = cloud.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
 					cloud.total_cost = cloud.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
@@ -215,11 +231,19 @@ public class Optimization {
 					dynamic_server.network_usage = dynamic_server.network_usage - cur_vm.vm_request.network_size;
 					dynamic_server.vm_list.remove(cur_vm);
 
-					double expect_time = cur_vm.vm_runtime < cloud_dynamic.t_min ? (cloud_dynamic.t_max + cloud_dynamic.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud_dynamic.t_max - cur_vm.vm_runtime)/2;
-					double cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
-							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
-							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
-
+					double cur_vm_cost = 0.0;
+					double expect_time = 0.0;
+					if (cur_vm.vm_state == 1) {
+						expect_time = cur_vm.vm_runtime < cloud_dynamic.t_min ? (cloud_dynamic.t_max + cloud_dynamic.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud_dynamic.t_max - cur_vm.vm_runtime)/2;
+						cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
+								cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
+								cur_vm.vm_request.network_size * dynamic_server.network_cost ) * expect_time;
+					}
+					if (cur_vm.vm_state == 2) {
+						expect_time = cur_vm.vm_suspendtime < cloud_dynamic.st_min ? (cloud_dynamic.st_max + cloud_dynamic.st_min - 2 * cur_vm.vm_suspendtime)/2 : (cloud_dynamic.st_max - cur_vm.vm_suspendtime)/2;
+						cur_vm_cost = cur_vm.vm_request.memory_size * dynamic_server.memory_cost * expect_time;
+					}
+					
 					cloud_dynamic.expect_cost = cloud_dynamic.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
 					cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
 
