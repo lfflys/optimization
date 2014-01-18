@@ -80,10 +80,6 @@ public class Cloud {
 		total_cost = 0.0;	
 		expect_cost = 0.0;
 	
-		set_server_list(MemoryCost, DiskCost, NetworkCost, MigrationCost, MemorySize, DiskSize, NetworkSize);
-        }
-
-	public void set_server_list(List<Double> MemoryCost, List<Double> DiskCost, List<Double> NetworkCost, double MigrationCost, List<Integer> MemorySize, List<Integer> DiskSize, List<Integer> NetworkSize) {
 		server_list = new ArrayList<Server>(server_num);
 		for (int i = 0; i < server_num; i ++) {
 			int j = (int) (Math.random() * security_num);
@@ -100,13 +96,16 @@ public class Cloud {
 
 			server_list.add(server_node);
 		}
-	}
+        }
+
 
 	public void copy(Cloud src) {
 		server_num = src.server_num;
 		security_num = src.security_num;
 		t_min = src.t_min;
 		t_max = src.t_max;
+		st_min = src.st_min;
+		st_max = src.st_max;
 		total_cost = src.total_cost;
 		expect_cost = src.expect_cost;
 
