@@ -62,6 +62,7 @@ public class VM implements Comparable<VM> {
 		vm_launchtime = src.vm_launchtime;
 		vm_resumetime = src.vm_resumetime;
 		vm_runtime = src.vm_runtime;
+		vm_suspendtime = src.vm_suspendtime;
 		vm_request = new Request();
 		vm_request.copy(src.vm_request);
 	}
