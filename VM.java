@@ -36,6 +36,8 @@ public class VM implements Comparable<VM> {
 
 	public double vm_runtime;
 
+	public double vm_suspendtime;
+
 	public VM() {}
 
 	public VM(
@@ -50,6 +52,7 @@ public class VM implements Comparable<VM> {
 		vm_launchtime = VmLaunchtime;
 		vm_resumetime = vm_launchtime;
 		vm_runtime = 0.0;
+		vm_suspendtime = 0.0;
 		vm_request = new Request(MemorySize, DiskSize, NetworkSize, SecurityLevel);
         }
 

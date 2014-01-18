@@ -26,6 +26,8 @@ public class Main {
 		final int CLOUD_SECURITY_NUM = 4;
 		final double CLOUD_T_MIN = 0.0;
 		final double CLOUD_T_MAX = 20.0;
+		final double CLOUD_ST_MIN = 0.0;
+		final double CLOUD_ST_MAX = 5.0;
 		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
 		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1);
 		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
@@ -39,6 +41,8 @@ public class Main {
 					CLOUD_SECURITY_NUM,
 					CLOUD_T_MIN,
 					CLOUD_T_MAX,
+					CLOUD_ST_MIN,
+					CLOUD_ST_MAX,
 					CLOUD_MEMORY_COST, 
 					CLOUD_DISK_COST, 
 					CLOUD_NETWORK_COST, 
@@ -66,7 +70,8 @@ public class Main {
 			System.out.println("1. Launch VMs;");
 			System.out.println("2. Terminate VMs;");
 			System.out.println("3. Suspend VMs");
-			System.out.println("4. Change VM requirements;");
+			System.out.println("4. Resume VMs");
+			System.out.println("5. Change VM requirements;");
 
 
 			in = new Scanner(System.in);
@@ -130,7 +135,43 @@ public class Main {
 				cloud.display_server();
 			}
 
+			if (selection == 3) {
+				System.out.println("Event time:");
+				in = new Scanner(System.in);
+				double time = in.nextDouble();
+
+				System.out.println("VM ID:");
+				in = new Scanner(System.in);
+				int vm_id = in.nextInt();
+
+				System.out.println("Begin VM Suspension......");
+				optimizer.energy_update(cloud,time);
+				res = optimizer.optimization_suspend(cloud, vm_id, time);
+				if (res == -1) {
+					System.out.println("Failed to suspend VMs");
+				}
+				cloud.display_server();
+			}
+
 			if (selection == 4) {
+				System.out.println("Event time:");
+				in = new Scanner(System.in);
+				double time = in.nextDouble();
+
+				System.out.println("VM ID:");
+				in = new Scanner(System.in);
+				int vm_id = in.nextInt();
+
+				System.out.println("Begin VM Resumption......");
+				optimizer.energy_update(cloud,time);
+				res = optimizer.optimization_resume(cloud, vm_id, time);
+				if (res == -1) {
+					System.out.println("Failed to resume VMs");
+				}
+				cloud.display_server();
+			}
+
+			if (selection == 5) {
 				System.out.println("Event time:");
 				in = new Scanner(System.in);
 				double time = in.nextDouble();
@@ -158,6 +199,9 @@ public class Main {
 				System.out.println("Begin VM Requirement Changing......");
 				optimizer.energy_update(cloud, time);
 				res = optimizer.optimization_change(cloud, vm_id, memory_size, disk_size, network_size, security_level, time);
+				if (res == -1) {
+					System.out.println("Failed to change requirements");
+				}
 				cloud.display_server();
 				
 			}

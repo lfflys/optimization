@@ -34,12 +34,19 @@ public class Optimization {
 
 		for (Server cur_server: cloud.server_list) {
 			for (VM cur_vm: cur_server.vm_list) {
-				double cur_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost +
-						    cur_vm.vm_request.disk_size * cur_server.disk_cost +
-						    cur_vm.vm_request.network_size * cur_server.network_cost ) * (t_event - cur_vm.vm_resumetime);
-				cloud.total_cost = cloud.total_cost + cur_cost;
+				double cur_cost = 0;
+				if (cur_vm.vm_state == 1) {
+					cur_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost +
+							    cur_vm.vm_request.disk_size * cur_server.disk_cost +
+							    cur_vm.vm_request.network_size * cur_server.network_cost ) * (t_event - cur_vm.vm_resumetime);
+					cur_vm.vm_runtime = cur_vm.vm_runtime + t_event - cur_vm.vm_resumetime;
+				}
+				if (cur_vm.vm_state == 2) {
+					cur_cost = cur_vm.vm_request.memory_size * (t_event - cur_vm.vm_resumetime);
+					cur_vm.vm_suspendtime = cur_vm.vm_suspendtime + t_event - cur_vm.vm_resumetime;
+				}
 
-				cur_vm.vm_runtime = cur_vm.vm_runtime + t_event - cur_vm.vm_resumetime;
+				cloud.total_cost = cloud.total_cost + cur_cost;
 				cur_vm.vm_resumetime = t_event;
 			}
 		}
@@ -353,6 +360,116 @@ public class Optimization {
 			return 0;
 		}
 
+	}
+
+	public int optimization_suspend(Cloud cloud, int vm_id, double t_event) {
+		int res = -1;
+		int i = 0;
+		int j = 0;
+		for (i = 0; i < cloud.server_list.size(); i ++) {
+			for (j = 0; j < cloud.server_list.get(i).vm_list.size(); j ++) {
+				if ((cloud.server_list.get(i).vm_list.get(j).vm_id == vm_id) && (cloud.server_list.get(i).vm_list.get(j).vm_state == 1)) {
+					res = 0;
+					break;
+				}
+			}
+		}
+
+		if (res == -1) {
+			return -1;
+		}
+
+		Server cur_server = cloud.server_list.get(i);
+		VM cur_vm = cur_server.vm_list.get(j);
+
+		double cur_migration_cost = cur_vm.vm_request.memory_size * cur_server.migration_cost;
+
+		cur_server.vm_list.remove(cur_vm);
+		cur_vm.vm_state = 2;
+		cur_vm.vm_suspendtime = 0;
+
+		Cloud cloud_dynamic = new Cloud();
+		cloud_dynamic.copy(cloud);
+
+		VM vm_dynamic = new VM();
+		vm_dynamic.copy(cur_vm);
+
+		cloud.expect_cost = cur_vm.vm_runtime * (cloud.st_max + cloud.st_min)/2;
+		cur_server.vm_list.add(cur_vm);
+
+		cloud_dynamic.total_cost = cloud_dynamic.total_cost + cur_migration_cost;
+		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost + cur_migration_cost;
+
+		res = optimization_launch(cloud_dynamic, vm_dynamic, t_event);
+
+		if ((res == -1)||(cloud.expect_cost < cloud_dynamic.expect_cost)) {
+			return 0;
+		}
+		else {
+			cloud.copy(cloud_dynamic);
+			return 0;
+		}
+	}
+
+	public int optimization_resume(Cloud cloud, int vm_id, double t_event) {
+		int res = -1;
+		int i = 0;
+		int j = 0;
+		for (i = 0; i < cloud.server_list.size(); i ++) {
+			for (j = 0; j < cloud.server_list.get(i).vm_list.size(); j ++) {
+				if ((cloud.server_list.get(i).vm_list.get(j).vm_id == vm_id) && (cloud.server_list.get(i).vm_list.get(j).vm_state == 2)) {
+					res = 0;
+					break;
+				}
+			}
+		}
+
+		if (res == -1) {
+			return -1;
+		}
+
+		Server cur_server = cloud.server_list.get(i);
+		VM cur_vm = cur_server.vm_list.get(j);
+
+		double cur_migration_cost = cur_vm.vm_request.memory_size * cur_server.migration_cost;
+
+		cur_server.vm_list.remove(cur_vm);
+		cur_vm.vm_state = 1;
+
+		Cloud cloud_dynamic = new Cloud();
+		cloud_dynamic.copy(cloud);
+
+		VM vm_dynamic = new VM();
+		vm_dynamic.copy(cur_vm);
+
+		double expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
+		double cur_vm_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost + 
+				       cur_vm.vm_request.disk_size * cur_server.disk_cost +
+				       cur_vm.vm_request.network_size * cur_server.network_cost ) * expect_time;
+
+		cloud.expect_cost = cur_vm_cost;
+		cur_server.vm_list.add(cur_vm);
+
+		cloud_dynamic.total_cost = cloud_dynamic.total_cost + cur_migration_cost;
+		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost = cur_migration_cost;
+
+		res = optimization_launch(cloud_dynamic, vm_dynamic, t_event);
+
+		if ( (cur_vm.vm_request.security_level > cur_server.security_level)) {
+			if (res == -1) {
+				return -1;
+			}
+			cloud.copy(cloud_dynamic);
+			return 0;
+		}
+
+		if ((res == -1)||(cloud.expect_cost < cloud_dynamic.expect_cost)) {
+			return 0;
+		}
+		else {
+			cloud.copy(cloud_dynamic);
+			return 0;
+		}
 	}
 
 }

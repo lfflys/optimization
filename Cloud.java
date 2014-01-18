@@ -35,12 +35,20 @@ public class Cloud {
 	 */
 
 	/*
-	 * Assuming the vm runtime satisfy the normal distribution
+	 * Assuming the vm runtime satisfy the event distribution
 	 * runtime t can be falling into the range [t_min, t_max]
 	 */
 	public double t_min;
 
 	public double t_max;
+
+	/*
+	 * Same condition: assuming the vm suspension time satisfy the even distribution
+	 *
+	 */
+	public double st_min;
+
+	public double st_max;
 
 	public List<Server> server_list;
 
@@ -53,6 +61,8 @@ public class Cloud {
 			int SecurityNum,
 			double TMin,
 			double TMax,
+			double STMin,
+			double STMax,
 			List<Double> MemoryCost,
 			List<Double> DiskCost,
 			List<Double> NetworkCost,
@@ -65,6 +75,8 @@ public class Cloud {
 		security_num = SecurityNum;
 		t_min = TMin;
 		t_max = TMax;
+		st_min = STMin;
+		st_max = STMax;
 		total_cost = 0.0;	
 		expect_cost = 0.0;
 	
