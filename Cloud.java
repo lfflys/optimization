@@ -23,11 +23,30 @@ public class Cloud implements Cloneable {
 
 	public double total_cost;
 
+	/*
+	 * Assuming the vm runtime satisfy the normal distribution N(t_avg, t_var)
+	 * f(t) = 1/(2*pi*t_var^2)^(1/2) * exp[-(t-t_avg)^2/(2 * t_var^2)]
+	 * This is hard to calculate. Consider the even distribution first
+	public double t_avg;
+
+	public double t_var;
+	 */
+
+	/*
+	 * Assuming the vm runtime satisfy the normal distribution
+	 * runtime t can be falling into the range [t_min, t_max]
+	 */
+	public double t_min;
+
+	public double t_max;
+
 	public List<Server> server_list;
 
 	public Cloud(
 			int ServerNum, 
 			int SecurityNum,
+			double TMin,
+			double TMax,
 			List<Double> MemoryCost,
 			List<Double> DiskCost,
 			List<Double> NetworkCost,
@@ -38,6 +57,8 @@ public class Cloud implements Cloneable {
 
 		server_num = ServerNum;
 		security_num = SecurityNum;
+		t_min = TMin;
+		t_max = TMax;
 		total_cost = 0.0;	
 	
 		set_server_list(MemoryCost, DiskCost, NetworkCost, MigrationCost, MemorySize, DiskSize, NetworkSize);

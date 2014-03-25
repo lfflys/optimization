@@ -35,13 +35,29 @@ public class Optimization {
 			Server cur_server = cloud.server_list.get(i);
 			if (cur_request.security_level <= cur_server.security_level) {
 
+				int stay_memory = cur_request.memory_size;
+				int stay_disk = cur_request.disk_size;
+				int stay_network = cur_request.network_size;
+				for(VM cur_vm:cur_server.vm_list){
+					if (cur_vm.vm_request.memory_size >= cur_request.memory_size) {
+						stay_memory = stay_memory + cur_vm.vm_request.memory_size;
+						stay_disk = stay_disk + cur_vm.vm_request.disk_size;
+						stay_network = stay_network + cur_vm.vm_request.network_size;
+					}
+				}
+
 				double cost = cur_request.memory_size * cur_server.memory_cost + 
 					      cur_request.disk_size * cur_server.disk_cost + 
 					      cur_request.network_size * cur_server.network_cost;
 
-				if (cost < dynamic_cost) {
-					dynamic_cost = cost;
-					dynamic_server = i;
+				if ( (stay_memory < cur_server.memory_size) && 
+				     (stay_disk < cur_server.memory_size) &&
+				     (stay_network < cur_server.network_size) ) {
+			
+					if (cost < dynamic_cost) {
+						dynamic_cost = cost;
+						dynamic_server = i;
+					}
 				}
 
 				if ( (cur_request.memory_size < (cur_server.memory_size - cur_server.memory_usage)) &&
@@ -55,6 +71,24 @@ public class Optimization {
 				}
 			}
 		}
-		return cloud;
+		
+		if (static_server == dynamic_server) {
+			cloud.total_cost = cloud.total_cost + static_cost;  // Actually needs to consider the time. tbd
+			cloud.server_list.get(static_server).memory_usage = cloud.server_list.get(static_server).memory_usage + cur_request.memory_size;
+			cloud.server_list.get(static_server).disk_usage = cloud.server_list.get(static_server).disk_usage + cur_request.disk_size;
+			cloud.server_list.get(static_server).network_usage = cloud.server_list.get(static_server).network_usage + cur_request.network_size;
+			cloud.server_list.get(static_server).vm_list.add(vm);
+
+			return cloud;
+		}
+		
+		if (dynamic_server == -1) {
+			return null;
+		}
+		return null;
 	}
 }
+
+
+
+
