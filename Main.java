@@ -8,6 +8,10 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Comparator;
+import java.util.Collections;
+import java.util.Scanner;
+
 
 /**
  * 
@@ -43,21 +47,55 @@ public class Main {
 					CLOUD_DISK_SIZE,
 					CLOUD_NETWORK_SIZE);
 
-		Cloud cloud1 = (Cloud) cloud.clone();
-		cloud1.server_num = 9;
-		
-		cloud.display_server();
-		cloud1.display_server();
-		
-		cloud1 = null;
+//		cloud.display_server();
 
-		VM vm = new VM (
-				0,
-				8,
-				1,
-				1,
-				1,
-				0);
-				
+		Scanner in;
+
+		int vmid = 0;
+
+		int res;
+		
+		Optimization optimizer = new Optimization ();
+
+		System.out.println("******************** Simulation begin ********************");
+
+		while (true) {
+
+			System.out.println("Launch time:");
+			in = new Scanner(System.in);
+			double time = in.nextDouble();
+
+			System.out.println("VM number:");
+			in = new Scanner(System.in);
+			int vm_num = in.nextInt();
+
+			System.out.println("Memory size:");
+			in = new Scanner(System.in);
+			int memory_size = in.nextInt();
+		
+			System.out.println("Disk size:");
+			in = new Scanner(System.in);
+			int disk_size = in.nextInt();
+		
+			System.out.println("Network size:");
+			in = new Scanner(System.in);
+			int network_size = in.nextInt();
+		
+			System.out.println("Security Level:");
+			in = new Scanner(System.in);
+			int security_level = in.nextInt();
+
+			System.out.println("Begin VM allocation......");
+
+			for (int i = 0; i < vm_num; i++) {
+				VM vm = new VM (vmid, memory_size, disk_size, network_size, security_level, time);
+				vmid = vmid + 1;
+				res = optimizer.optimization(cloud, vm, time);
+				if (res == -1) {
+					System.out.println("Failed to allocate VMs");
+					break;
+				}
+			}
+		}
 	}
 }
