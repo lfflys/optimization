@@ -11,6 +11,12 @@ import java.lang.Math;
 import java.util.Comparator;
 import java.util.Collections;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.IOException;
+
 /**
  * 
  * @author Tianwei Zhang
@@ -27,8 +33,8 @@ public class Optimization {
 	public int optimization(Cloud cloud, VM vm, double t_event) {
 
 		// Make sure static_cost and dynamic_cost is large enough.
-		double static_cost = 10000.0;
-		double dynamic_cost = 10000.0;
+		double static_cost = 100000000.0;
+		double dynamic_cost = 100000000.0;
 		int static_index = -1;
 		int dynamic_index = -1;
 
@@ -55,19 +61,29 @@ public class Optimization {
 					        cur_request.disk_size * cur_server.disk_cost + 
 					        cur_request.network_size * cur_server.network_cost ) * (cloud.t_max - (vm.vm_runtime + t_event - vm.vm_resumetime))/2;
 
-				if ( (stay_memory < cur_server.memory_size) && 
-				     (stay_disk < cur_server.memory_size) &&
-				     (stay_network < cur_server.network_size) ) {
+				if ( (stay_memory <= cur_server.memory_size) && 
+				     (stay_disk <= cur_server.disk_size) &&
+				     (stay_network <= cur_server.network_size) ) {
 			
 					if (cost < dynamic_cost) {
 						dynamic_cost = cost;
 						dynamic_index = i;
+//						try {
+//							PrintWriter writer = new PrintWriter("log.txt", "UTF-8");
+//							writer.println("stay_memory:	" + stay_memory);
+//							writer.println("server_memory:	" + cur_server.memory_size);
+//							writer.println("server_id:	" + cur_server.server_id);
+//							writer.println("dynamic_index:	" + dynamic_index);
+//							writer.close();
+//						} catch ( IOException e ) {
+//							e.printStackTrace();
+//						}
 					}
 				}
 
-				if ( (cur_request.memory_size < (cur_server.memory_size - cur_server.memory_usage)) &&
-				     (cur_request.disk_size < (cur_server.disk_size - cur_server.disk_usage)) &&
-				     (cur_request.network_size < (cur_server.network_size - cur_server.network_usage)) ) {
+				if ( (cur_request.memory_size <= (cur_server.memory_size - cur_server.memory_usage)) &&
+				     (cur_request.disk_size <= (cur_server.disk_size - cur_server.disk_usage)) &&
+				     (cur_request.network_size <= (cur_server.network_size - cur_server.network_usage)) ) {
 				
 					if (cost < static_cost) {
 						static_cost = cost;
@@ -76,6 +92,7 @@ public class Optimization {
 				}
 			}
 		}
+		
 		
 		// This cloud system is full and no available server can satisfy the VM any more.
 		if (dynamic_index == -1) {
@@ -103,9 +120,10 @@ public class Optimization {
 			dynamic_server.disk_usage = dynamic_server.disk_usage + cur_request.disk_size;
 			dynamic_server.network_usage = dynamic_server.network_usage + cur_request.network_size;
 			dynamic_server.vm_list.add(vm);
-			Collections.sort(dynamic_server.vm_list);
 
-			for (VM cur_vm : dynamic_server.vm_list) {
+			while (true) {
+				Collections.sort(dynamic_server.vm_list);
+				VM cur_vm = dynamic_server.vm_list.get(0);
 				if ( (dynamic_server.memory_size < dynamic_server.memory_usage) ||
 				     (dynamic_server.disk_size < dynamic_server.disk_usage) ||
 				     (dynamic_server.network_size < dynamic_server.network_usage) ) {
@@ -113,6 +131,11 @@ public class Optimization {
 					dynamic_server.disk_usage = dynamic_server.disk_usage - cur_vm.vm_request.disk_size;
 					dynamic_server.network_usage = dynamic_server.network_usage - cur_vm.vm_request.network_size;
 					dynamic_server.vm_list.remove(cur_vm);
+	
+					double cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
+							       cur_vm.vm_request.disk_size * dynamic_server.disk_cost + 
+							       cur_vm.vm_request.network_size * dynamic_server.network_cost ) * (cloud.t_max - (cur_vm.vm_runtime + t_event - vm.vm_resumetime))/2;
+					cloud_dynamic.total_cost = cloud_dynamic.total_cost - cur_vm_cost + cur_vm.vm_request.memory_size * dynamic_server.migration_cost;
 
 					res = optimization(cloud_dynamic, cur_vm, t_event);
 					if (res == -1) {
@@ -145,9 +168,14 @@ public class Optimization {
 			dynamic_server.disk_usage = dynamic_server.disk_usage + cur_request.disk_size;
 			dynamic_server.network_usage = dynamic_server.network_usage + cur_request.network_size;
 			dynamic_server.vm_list.add(vm);
-			Collections.sort(dynamic_server.vm_list);
 
-			for (VM cur_vm : dynamic_server.vm_list) {
+
+			System.out.println("static cloud:");
+			cloud_static.display_server();
+			
+			while (true) {
+				Collections.sort(dynamic_server.vm_list);
+				VM cur_vm = dynamic_server.vm_list.get(0);
 				if ( (dynamic_server.memory_size < dynamic_server.memory_usage) ||
 				     (dynamic_server.disk_size < dynamic_server.disk_usage) ||
 				     (dynamic_server.network_size < dynamic_server.network_usage) ) {
@@ -167,10 +195,15 @@ public class Optimization {
 			}
 
 			if ((res == -1) || (cloud_static.total_cost <= cloud_dynamic.total_cost)) {
+				System.out.println("Use cloud_static");
+				cloud_static.display_server();
 				cloud = (Cloud) cloud_static.clone();
+				System.out.println("after cloning, cloud is:");
+				cloud.display_server();
 				return 0;
 			}
 			else {
+				System.out.println("Use dynamic_static");
 				cloud = (Cloud) cloud_dynamic.clone();
 				return 1;
 			}

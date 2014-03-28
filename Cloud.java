@@ -84,9 +84,20 @@ public class Cloud implements Cloneable {
 	}
 
 	public void display_server() {
-		System.out.println("id	Memory	Disk	Network	Security" );
+		
+		System.out.println("id	Memory	usage	Disk	usage	Network	usage	Sec");
 		for (int i = 0; i< server_num; i ++) {
-			System.out.println(server_list.get(i).server_id + "	" + server_list.get(i).memory_size + "	" + server_list.get(i).disk_size + "	" + server_list.get(i).network_size + "	" + server_list.get(i).security_level);
+			System.out.println(server_list.get(i).server_id + "	" + 
+					   server_list.get(i).memory_size + "	" + 
+					   server_list.get(i).memory_usage + "	" +
+					   server_list.get(i).disk_size + "	" + 
+					   server_list.get(i).disk_usage + "	" + 
+					   server_list.get(i).network_size + "	" + 
+					   server_list.get(i).network_usage + "	" + 
+					   server_list.get(i).security_level + "	" );
+			for (int j = 0; j < server_list.get(i).vm_list.size(); j ++){
+				System.out.println("										" + server_list.get(i).vm_list.get(j).vm_id + "	");
+			}
 		}
 	}
 
@@ -94,6 +105,10 @@ public class Cloud implements Cloneable {
 		Cloud sc = null;
 		try {
 			sc = (Cloud) super.clone();
+			sc.server_list = new ArrayList<Server>(server_list.size());
+			for (Server cur_server: server_list) {
+				sc.server_list.add((Server) cur_server.clone());
+			}
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 		}

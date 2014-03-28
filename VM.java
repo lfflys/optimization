@@ -55,6 +55,7 @@ public class VM implements Cloneable, Comparable<VM> {
 		VM sc = null;
 		try {
 			sc = (VM) super.clone();
+			sc.vm_request = (Request) vm_request.clone();
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 		}

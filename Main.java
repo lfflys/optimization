@@ -29,7 +29,7 @@ public class Main {
 		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
 		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1);
 		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
-		final double CLOUD_MIGRATION_COST = 100.0;
+		final double CLOUD_MIGRATION_COST = 100000.0;
 		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(1024, 2048, 4096, 8192);
 		final List <Integer> CLOUD_DISK_SIZE = Arrays.asList(1024, 2048, 4096);
 		final List <Integer> CLOUD_NETWORK_SIZE = Arrays.asList(10, 20, 30, 40);
@@ -56,6 +56,8 @@ public class Main {
 		int res;
 		
 		Optimization optimizer = new Optimization ();
+
+		cloud.display_server();
 
 		System.out.println("******************** Simulation begin ********************");
 
@@ -88,7 +90,7 @@ public class Main {
 			System.out.println("Begin VM allocation......");
 
 			for (int i = 0; i < vm_num; i++) {
-				VM vm = new VM (vmid, memory_size, disk_size, network_size, security_level, time);
+				VM vm = new VM(vmid, memory_size, disk_size, network_size, security_level, time);
 				vmid = vmid + 1;
 				res = optimizer.optimization(cloud, vm, time);
 				if (res == -1) {
@@ -96,6 +98,7 @@ public class Main {
 					break;
 				}
 			}
+			cloud.display_server();
 		}
 	}
 }

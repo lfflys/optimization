@@ -15,7 +15,7 @@ import java.lang.Math;
  * @author Tianwei Zhang
  * 
  */
-public class Request {
+public class Request implements Cloneable {
 	public int memory_size;
 	public int disk_size;
 	public int network_size;
@@ -31,5 +31,15 @@ public class Request {
 		disk_size = DiskSize;
 		network_size = NetworkSize;
 		security_level = SecurityLevel;
+	}
+
+	public Object clone() {
+		Request sc = null;
+		try {
+			sc = (Request) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return sc;
 	}
 }

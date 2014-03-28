@@ -15,7 +15,7 @@ import java.lang.Math;
  * @author Tianwei Zhang
  * 
  */
-public class Server {
+public class Server implements Cloneable {
 	public int server_id;
 	public int memory_size;
 	public int disk_size;
@@ -59,5 +59,19 @@ public class Server {
 		network_usage = 0;
 		
 		vm_list = new ArrayList<VM>();
+	}
+
+	public Object clone() {
+		Server sc = null;
+		try {
+			sc = (Server) super.clone();
+			sc.vm_list = new ArrayList<VM> (vm_list.size());
+			for (VM cur_vm: vm_list){
+				sc.vm_list.add((VM)cur_vm.clone());
+			}
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return sc;
 	}
 }
