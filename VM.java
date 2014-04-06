@@ -30,13 +30,11 @@ public class VM implements Comparable<VM> {
 	 */
 	public int vm_state;
 
-	public double vm_launchtime;
+	public int vm_lastevent;
 
-	public double vm_resumetime;
+	public int vm_runtime;
 
-	public double vm_runtime;
-
-	public double vm_suspendtime;
+	public int vm_suspendtime;
 
 	public VM() {}
 
@@ -46,21 +44,19 @@ public class VM implements Comparable<VM> {
 			int DiskSize,
 			int NetworkSize,
 			int SecurityLevel,
-			double VmLaunchtime ) {
+			int VmLaunchtime ) {
 		vm_id = VmId;
 		vm_state = 1;
-		vm_launchtime = VmLaunchtime;
-		vm_resumetime = vm_launchtime;
-		vm_runtime = 0.0;
-		vm_suspendtime = 0.0;
+		vm_lastevent = VmLaunchtime;
+		vm_runtime = 0;
+		vm_suspendtime = 0;
 		vm_request = new Request(MemorySize, DiskSize, NetworkSize, SecurityLevel);
         }
 
 	public void copy(VM src) {
 		vm_id = src.vm_id;
 		vm_state = src.vm_state;
-		vm_launchtime = src.vm_launchtime;
-		vm_resumetime = src.vm_resumetime;
+		vm_lastevent = src.vm_lastevent;
 		vm_runtime = src.vm_runtime;
 		vm_suspendtime = src.vm_suspendtime;
 		vm_request = new Request();

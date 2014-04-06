@@ -30,7 +30,7 @@ public class Optimization {
 	 * right now, it does not consider the event of resumation or termination.
 	 */
 
-	public void energy_update(Cloud cloud, double t_event) {
+	public void energy_update(Cloud cloud, int t_event) {
 
 		for (Server cur_server: cloud.server_list) {
 			for (VM cur_vm: cur_server.vm_list) {
@@ -38,16 +38,16 @@ public class Optimization {
 				if (cur_vm.vm_state == 1) {
 					cur_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost +
 						     cur_vm.vm_request.disk_size * cur_server.disk_cost +
-						     cur_vm.vm_request.network_size * cur_server.network_cost ) * (t_event - cur_vm.vm_resumetime);
-					cur_vm.vm_runtime = cur_vm.vm_runtime + t_event - cur_vm.vm_resumetime;
+						     cur_vm.vm_request.network_size * cur_server.network_cost ) * (t_event - cur_vm.vm_lastevent);
+					cur_vm.vm_runtime = cur_vm.vm_runtime + t_event - cur_vm.vm_lastevent;
 				}
 				if (cur_vm.vm_state == 2) {
-					cur_cost = cur_vm.vm_request.memory_size * cur_server.memory_cost * (t_event - cur_vm.vm_resumetime);
-					cur_vm.vm_suspendtime = cur_vm.vm_suspendtime + t_event - cur_vm.vm_resumetime;
+					cur_cost = cur_vm.vm_request.memory_size * cur_server.memory_cost * (t_event - cur_vm.vm_lastevent);
+					cur_vm.vm_suspendtime = cur_vm.vm_suspendtime + t_event - cur_vm.vm_lastevent;
 				}
 
 				cloud.total_cost = cloud.total_cost + cur_cost;
-				cur_vm.vm_resumetime = t_event;
+				cur_vm.vm_lastevent = t_event;
 			}
 		}
 
@@ -59,7 +59,7 @@ public class Optimization {
  	 * optimization_launch tries to find the best server to locate the machines
  	 *
  	 */
-	public int optimization_launch(Cloud cloud, VM vm, double t_event) {
+	public int optimization_launch(Cloud cloud, VM vm, int t_event) {
 
 		// Make sure static_cost and dynamic_cost is large enough.
 		double static_cost = 100000000.0;
@@ -87,7 +87,7 @@ public class Optimization {
 				}
 
 				double cost = 0.0;
-				double expect_time = 0.0;
+				int expect_time = 0;
 				if (vm.vm_state == 1) {
 					expect_time = vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * vm.vm_runtime)/2 : (cloud.t_max - vm.vm_runtime)/2;
 					cost = ( cur_request.memory_size * cur_server.memory_cost + 
@@ -160,7 +160,7 @@ public class Optimization {
 					dynamic_server.vm_list.remove(cur_vm);
 				
 					double cur_vm_cost = 0.0;
-					double expect_time = 0.0;
+					int expect_time = 0;
 					if (cur_vm.vm_state == 1) {
 						expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
 						cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
@@ -221,7 +221,7 @@ public class Optimization {
 					dynamic_server.vm_list.remove(cur_vm);
 
 					double cur_vm_cost = 0.0;
-					double expect_time = 0.0;
+					int expect_time = 0;
 					if (cur_vm.vm_state == 1) {
 						expect_time = cur_vm.vm_runtime < cloud_dynamic.t_min ? (cloud_dynamic.t_max + cloud_dynamic.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud_dynamic.t_max - cur_vm.vm_runtime)/2;
 						cur_vm_cost = ( cur_vm.vm_request.memory_size * dynamic_server.memory_cost + 
@@ -235,7 +235,6 @@ public class Optimization {
 					
 					cloud_dynamic.expect_cost = cloud_dynamic.expect_cost - cur_vm_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
 					cloud_dynamic.total_cost = cloud_dynamic.total_cost + dynamic_server.migration_cost * cur_vm.vm_request.memory_size;
-
 					res = optimization_launch(cloud_dynamic, cur_vm, t_event);
 
 					if (res == -1) {
@@ -269,7 +268,7 @@ public class Optimization {
 	 * Another reason is without optimization, this can leave some bugs for the customer to game.
 	 *
 	 */
-	public int optimization_terminate(Cloud cloud, int vm_id, double t_event) {
+	public int optimization_terminate(Cloud cloud, int vm_id, int t_event) {
 		int res = -1;
 		for (Server cur_server: cloud.server_list) {
 			for (VM cur_vm: cur_server.vm_list) {
@@ -297,7 +296,7 @@ public class Optimization {
 	 * optimization_change tries to change the VM's requirements and (or) reallocate them.
 	 *
 	 */
-	public int optimization_change(Cloud cloud, int vm_id, int memory_size, int disk_size, int network_size, int security_level, double t_event) {
+	public int optimization_change(Cloud cloud, int vm_id, Request request, int t_event) {
 		int res = -1;
 		int i = 0;
 		int j = 0;
@@ -329,10 +328,10 @@ public class Optimization {
 
 		double cur_migration_cost = cur_vm.vm_request.memory_size * cur_server.migration_cost;
 		
-		cur_vm.vm_request.memory_size = memory_size;
-		cur_vm.vm_request.disk_size = disk_size;
-		cur_vm.vm_request.network_size = network_size;
-		cur_vm.vm_request.security_level = security_level;
+		cur_vm.vm_request.memory_size = request.memory_size;
+		cur_vm.vm_request.disk_size = request.disk_size;
+		cur_vm.vm_request.network_size = request.network_size;
+		cur_vm.vm_request.security_level = request.security_level;
 
 		Cloud cloud_dynamic = new Cloud();
 		cloud_dynamic.copy(cloud);
@@ -340,7 +339,7 @@ public class Optimization {
 		VM vm_dynamic = new VM();
 		vm_dynamic.copy(cur_vm);
 
-		double expect_time = 0.0;
+		int expect_time = 0;
 		double cur_vm_cost = 0.0;
 
 		if (cur_vm.vm_state == 1) {
@@ -386,7 +385,7 @@ public class Optimization {
 
 	}
 
-	public int optimization_suspend(Cloud cloud, int vm_id, double t_event) {
+	public int optimization_suspend(Cloud cloud, int vm_id, int t_event) {
 		int res = -1;
 		int i = 0;
 		int j = 0;
@@ -396,6 +395,9 @@ public class Optimization {
 					res = 0;
 					break;
 				}
+			}
+			if (res == 0) {
+				break;
 			}
 		}
 
@@ -435,7 +437,7 @@ public class Optimization {
 		}
 	}
 
-	public int optimization_resume(Cloud cloud, int vm_id, double t_event) {
+	public int optimization_resume(Cloud cloud, int vm_id, int t_event) {
 		int res = -1;
 		int i = 0;
 		int j = 0;
@@ -446,6 +448,10 @@ public class Optimization {
 					break;
 				}
 			}
+			if (res == 0) {
+				break;
+			}
+			
 		}
 
 		if (res == -1) {
@@ -466,7 +472,7 @@ public class Optimization {
 		VM vm_dynamic = new VM();
 		vm_dynamic.copy(cur_vm);
 
-		double expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
+		int expect_time = cur_vm.vm_runtime < cloud.t_min ? (cloud.t_max + cloud.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud.t_max - cur_vm.vm_runtime)/2;
 		double cur_vm_cost = ( cur_vm.vm_request.memory_size * cur_server.memory_cost + 
 				       cur_vm.vm_request.disk_size * cur_server.disk_cost +
 				       cur_vm.vm_request.network_size * cur_server.network_cost ) * expect_time;

@@ -5,7 +5,7 @@ JC = javac
 .java.class:
 	$(JC) $(JFLAGS) $*.java
 
-CLASSES = Cloud.java Server.java VM.java Request.java Optimization.java Main.java 
+CLASSES = Cloud.java Server.java VM.java Request.java Activity.java Optimization.java Main.java 
 
 default: classes
 
