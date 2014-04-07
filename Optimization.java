@@ -117,11 +117,14 @@ public class Optimization {
 						static_cost = cost;
 						static_index = i;
 					}
+					if (cost == dynamic_cost) {
+						dynamic_cost = cost;
+						dynamic_index = i;
+					}
 				}
 			}
 		}
-		
-		
+
 		// This cloud system is full and no available server can satisfy the VM any more.
 		if (dynamic_index == -1) {
 			return -1;
@@ -273,9 +276,9 @@ public class Optimization {
 		for (Server cur_server: cloud.server_list) {
 			for (VM cur_vm: cur_server.vm_list) {
 				if (cur_vm.vm_id == vm_id){
-					cur_server.memory_size = cur_server.memory_size - cur_vm.vm_request.memory_size;
-					cur_server.disk_size = cur_server.disk_size - cur_vm.vm_request.disk_size;
-					cur_server.network_size = cur_server.network_size - cur_vm.vm_request.network_size;
+					cur_server.memory_usage = cur_server.memory_usage - cur_vm.vm_request.memory_size;
+					cur_server.disk_usage = cur_server.disk_usage - cur_vm.vm_request.disk_size;
+					cur_server.network_usage = cur_server.network_usage - cur_vm.vm_request.network_size;
 					
 					cur_server.vm_list.remove(cur_vm);
 
