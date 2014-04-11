@@ -175,6 +175,7 @@ public class Optimization {
 
 		// Migration is needed to allocate the VM
 		if (static_index == -1) {
+			System.out.println("Migration is necessary");
 			Server dynamic_server = cloud.server_list.get(dynamic_index);
 			cloud.expect_cost = cloud.expect_cost + dynamic_cost;
 	
@@ -304,6 +305,7 @@ public class Optimization {
 				return 0;
 			}
 			else {
+				System.out.println("Migration is necessary");
 				cloud.copy(cloud_dynamic);
 				return 1;
 			}
@@ -417,6 +419,14 @@ public class Optimization {
 
 		cloud.expect_cost = cur_vm_cost;
 		cur_server.vm_list.add(cur_vm);
+		if (cur_vm.vm_state == 1) {
+			cur_server.memory_usage = cur_server.memory_usage + cur_vm.vm_request.memory_size;
+			cur_server.disk_usage = cur_server.disk_usage + cur_vm.vm_request.disk_size;
+			cur_server.network_usage = cur_server.network_usage + cur_vm.vm_request.network_size;
+		}
+		if (cur_vm.vm_state == 2) {
+			cur_server.disk_usage = cur_server.disk_usage + cur_vm.vm_request.disk_size;
+		}
 
 		cloud_dynamic.total_cost = cloud_dynamic.total_cost + cur_migration_cost;
 		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost + cur_migration_cost;

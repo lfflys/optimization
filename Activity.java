@@ -47,4 +47,13 @@ public class Activity {
 		request = new Request();
 		request.copy(cur_request);
 	}
+
+	public void copy(Activity src) {
+		event_time = src.event_time;
+		vm = new VM();
+		vm.copy(src.vm);
+		action = src.action;
+		request = new Request();
+		request.copy(src.request);
+	}
 }

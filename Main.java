@@ -13,6 +13,13 @@ import java.util.Collections;
 import java.util.Scanner;
 import java.lang.Math;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.IOException;
+
+
 /**
  * 
  * @author Tianwei Zhang
@@ -22,28 +29,28 @@ public class Main {
 
 	public static void main(String[] args) {
 
-		final int CLOUD_SERVER_NUM = 20;
+		final int CLOUD_SERVER_NUM = 100;
 		final int CLOUD_SECURITY_NUM = 4;
 		final int CLOUD_T_MIN = 0;
-		final int CLOUD_T_MAX = 2;
+		final int CLOUD_T_MAX = 10;
 		final int CLOUD_ST_MIN = 0;
 		final int CLOUD_ST_MAX = 1;
 		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
 		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1);
 		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
-		final double CLOUD_MIGRATION_COST = 1000000.0;
-		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(1024, 2048, 4096, 8192);
+		final double CLOUD_MIGRATION_COST = 0.0;
+		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(4096, 8192, 16384, 32768, 65536);
 		final List <Integer> CLOUD_DISK_SIZE = Arrays.asList(1024, 2048, 4096);
-		final List <Integer> CLOUD_NETWORK_SIZE = Arrays.asList(10, 20, 30, 40);
+		final List <Integer> CLOUD_NETWORK_SIZE = Arrays.asList(100, 200, 300, 400);
 
-		List <Integer> VM_MEMORY_SIZE = Arrays.asList(512, 1024, 2048);
-		List <Integer> VM_DISK_SIZE = Arrays.asList(512, 1024);
+		List <Integer> VM_MEMORY_SIZE = Arrays.asList(64, 128, 256, 512, 1024, 2048, 4096); //MB
+		List <Integer> VM_DISK_SIZE = Arrays.asList(0, 1, 20, 40, 80, 160);  //GB
 		List <Integer> VM_NETWORK_SIZE = Arrays.asList(1, 2, 3);
-		double VM_SUSPEND_PROB = 0.1;
-		double VM_CHANGE_PROB = 0.05;
-		int VM_LAUNCH_NUM = 3;
+		double VM_SUSPEND_PROB = 0.0;
+		double VM_CHANGE_PROB = 0.0;
+		int VM_LAUNCH_NUM = 20;
 
-		int PERIOD = 10;
+		int PERIOD = 100;
 
 		Cloud cloud = new Cloud ( 
 					CLOUD_SERVER_NUM, 
@@ -60,13 +67,24 @@ public class Main {
 					CLOUD_DISK_SIZE,
 					CLOUD_NETWORK_SIZE);
 
+		Cloud cloud_random = new Cloud();
+		Cloud cloud_bfd = new Cloud();
+		cloud_random.copy(cloud);
+		cloud_bfd.copy(cloud);		
+
 		Scanner in;
 
 		int vmid = 0;
 
 		int res = 0;
+		int res_random = 0;
+		int res_bfd = 0;
+
+		int vm_total_num = 0;
 		
 		Optimization optimizer = new Optimization ();
+		Random random = new Random();
+		BFD bfd = new BFD(); 
 
 		ArrayList<ArrayList<Activity>> tasks = new ArrayList<ArrayList<Activity>>();
 
@@ -79,6 +97,7 @@ public class Main {
 
 		for (int i=0; i<PERIOD; i++) {
 			int vm_launch_num = (int)(Math.random() * VM_LAUNCH_NUM);
+			vm_total_num = vm_total_num + vm_launch_num;
 			for (int j=0; j<vm_launch_num; j++) {
 				int memory_size = VM_MEMORY_SIZE.get((int)(Math.random()*VM_MEMORY_SIZE.size()));
 				int disk_size = VM_DISK_SIZE.get((int)(Math.random()*VM_DISK_SIZE.size()));
@@ -129,57 +148,123 @@ public class Main {
 				vmid = vmid + 1;
 			}
 
+
 			optimizer.energy_update(cloud, i);
+			random.energy_update(cloud_random, i);
+			bfd.energy_update(cloud_bfd, i);
 			for (Activity cur_activity:tasks.get(i)) {
+				Activity cur_activity_random = new Activity();
+				cur_activity_random.copy(cur_activity);
+				Activity cur_activity_bfd = new Activity();
+				cur_activity_bfd.copy(cur_activity);
+
 				if (cur_activity.action == 0) {
 					res = optimizer.optimization_launch(cloud, cur_activity.vm, i);
+					res_random = random.random_launch(cloud_random, cur_activity_random.vm, i);
+					res_bfd = bfd.bfd_launch(cloud_bfd, cur_activity_bfd.vm, i);
+					
 					if (res == -1) {
-						System.out.println("Failed to launch VMs");
+						System.out.println("Failed to launch VMs for Optimization");
+						break;
+					}
+					if (res_random == -1) {
+						System.out.println("Failed to launch VMs for Random");
+						break;
+					}
+					if (res_bfd == -1) {
+						System.out.println("Failed to launch VMs for BFD");
 						break;
 					}
 				}
 
 				if (cur_activity.action == 1) {
 					res = optimizer.optimization_terminate(cloud, cur_activity.vm.vm_id, i);
+					res_random = random.random_terminate(cloud_random, cur_activity_random.vm.vm_id, i);
+					res_bfd = bfd.bfd_terminate(cloud_bfd, cur_activity_bfd.vm.vm_id, i);
 					if (res == -1) {
-						System.out.println("Failed to terminate VMs");
+						System.out.println("Failed to terminate VMs for Optimization");
+						break;
+					}
+					if (res_random == -1) {
+						System.out.println("Failed to terminate VMs for Random");
+						break;
+					}
+					if (res_bfd == -1) {
+						System.out.println("Failed to terminate VMs for BFD");
 						break;
 					}
 				}
 
 				if (cur_activity.action == 2) {
 					res = optimizer.optimization_suspend(cloud, cur_activity.vm.vm_id, i);
+					res_random = random.random_suspend(cloud_random, cur_activity_random.vm.vm_id, i);
+					res_bfd = bfd.bfd_suspend(cloud_bfd, cur_activity_bfd.vm.vm_id, i);
 					if (res == -1) {
-						System.out.println("Failed to suspend VMs");
+						System.out.println("Failed to suspend VMs for Optimization");
+						break;
+					}
+					if (res_random == -1) {
+						System.out.println("Failed to suspend VMs for Random");
+						break;
+					}
+					if (res_bfd == -1) {
+						System.out.println("Failed to suspend VMs for BFD");
 						break;
 					}
 				}
 
 				if (cur_activity.action == 3) {
 					res = optimizer.optimization_resume(cloud, cur_activity.vm.vm_id, i);
+					res_random = random.random_resume(cloud_random, cur_activity_random.vm.vm_id, i);
+					res_bfd = bfd.bfd_resume(cloud_bfd, cur_activity_bfd.vm.vm_id, i);
 					if (res == -1) {
-						System.out.println("Failed to resume VMs");
+						System.out.println("Failed to resume VMs for Optimization");
+						break;
+					}
+					if (res_random == -1) {
+						System.out.println("Failed to resume VMs for Random");
+						break;
+					}
+					if (res_bfd == -1) {
+						System.out.println("Failed to resume VMs for BFD");
 						break;
 					}
 				}
 
 				if (cur_activity.action == 4) {
 					res = optimizer.optimization_change(cloud, cur_activity.vm.vm_id, cur_activity.request, i);
+					res_random = random.random_change(cloud_random, cur_activity_random.vm.vm_id, cur_activity_random.request, i);
+					res_bfd = bfd.bfd_change(cloud_bfd, cur_activity_bfd.vm.vm_id, cur_activity_bfd.request, i);
 					if (res == -1) {
-						System.out.println("Failed to change VMs");
+						System.out.println("Failed to change VMs for Optimization");
+						break;
+					}
+					if (res_random == -1) {
+						System.out.println("Failed to change VMs for Random");
+						break;
+					}
+					if (res_bfd == -1) {
+						System.out.println("Failed to change VMs for BFD");
 						break;
 					}
 				}
 
 			}
-			if (res == -1) {
+			if ((res == -1)||(res_random == -1)||(res_bfd == -1)) {
 				System.out.println("******************** Simulation Abort ********************");
 				break;
 			}
 		}
 
 		if (res != -1) {
-			cloud.display_server();
+			try {
+				PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
+				writer.println("optimization	" + vm_total_num + "	" + cloud.total_cost + "	" + cloud.total_cost/vm_total_num);
+				writer.println("random	" + vm_total_num + "	" + cloud_random.total_cost + "	" + cloud_random.total_cost/vm_total_num);
+				writer.println("bfd	" + vm_total_num + "	" + cloud_bfd.total_cost + "	" + cloud_bfd.total_cost/vm_total_num);
+				writer.close();
+			} catch (IOException e) {
+			}
 			System.out.println("******************** Simulation Finished ********************");
 		}
 
