@@ -147,28 +147,4 @@ public class Cloud {
 		} catch (IOException e) {
 		}
 	}
-	public void display_cloud1() {
-		try {
-			PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt1", true)));
-			writer.println("id	Memory	usage	Disk	usage	Network	usage	Sec	VMid	runtime");
-			for (int i = 0; i< server_num; i ++) {
-			if (server_list.get(i).vm_list.size() > 0) {
-				writer.println(server_list.get(i).server_id + "	" + 
-					       server_list.get(i).memory_size + "	" + 
-					       server_list.get(i).memory_usage + "	" +
-					       server_list.get(i).disk_size + "	" + 
-					       server_list.get(i).disk_usage + "	" + 
-					       server_list.get(i).network_size + "	" + 
-					       server_list.get(i).network_usage + "	" + 
-					       server_list.get(i).security_level + "	" );
-				for (int j = 0; j < server_list.get(i).vm_list.size(); j ++){
-					writer.println("								" + server_list.get(i).vm_list.get(j).vm_id + "	" + server_list.get(i).vm_list.get(j).vm_runtime);
-				}
-			}
-			}
-			writer.println("Total cost:	" + total_cost);
-			writer.close();
-		} catch (IOException e) {
-		}
-	}
 }

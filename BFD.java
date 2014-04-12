@@ -53,15 +53,6 @@ public class BFD {
 
 		cloud.total_cost = cloud.total_cost + new_cost;
 		cloud.expect_cost = 0;
-                try {
-                        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt1", true)));
-                        writer.println(" ");
-                        writer.println("time: " + t_event + "	new_cost: " + new_cost);
-                        writer.close();
-                } catch (IOException e) {
-                }
-
-		cloud.display_cloud1();
 	}
 
 	/**

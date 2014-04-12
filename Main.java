@@ -29,7 +29,7 @@ public class Main {
 
 	public static void main(String[] args) {
 
-		final int CLOUD_SERVER_NUM = 10;
+		final int CLOUD_SERVER_NUM = 100;
 		final int CLOUD_SECURITY_NUM = 4;
 		final int CLOUD_T_MIN = 10;
 		final int CLOUD_T_MAX = 10;
@@ -50,7 +50,7 @@ public class Main {
 		List <Integer> VM_NETWORK_SIZE = Arrays.asList(1, 2, 3);
 		double VM_SUSPEND_PROB = 0.0;
 		double VM_CHANGE_PROB = 0.0;
-		int VM_LAUNCH_NUM = 1;
+		int VM_LAUNCH_NUM = 10;
 
 		int PERIOD = 1000;
 
@@ -264,7 +264,7 @@ public class Main {
 
 		if (res != -1) {
 			try {
-				PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt2", true)));
+				PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
 				writer.println("optimization	" + vm_total_num + "	" + cloud.total_cost + "	" + cloud.total_cost/vm_total_num);
 				writer.println("random	" + vm_total_num + "	" + cloud_random.total_cost + "	" + cloud_random.total_cost/vm_total_num);
 				writer.println("bfd	" + vm_total_num + "	" + cloud_bfd.total_cost + "	" + cloud_bfd.total_cost/vm_total_num);
