@@ -10,6 +10,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.lang.Math;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.IOException;
+
 /**
  * 
  * @author Tianwei Zhang
@@ -61,6 +67,16 @@ public class VM implements Comparable<VM> {
 		vm_suspendtime = src.vm_suspendtime;
 		vm_request = new Request();
 		vm_request.copy(src.vm_request);
+	}
+
+	public void display_vm() {
+		try{
+			PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
+			writer.println("id	memory	disk	network	sec");
+			writer.println(vm_id + "	" + vm_request.memory_size + "	" + vm_request.disk_size + "	" + vm_request.network_size + "	" + vm_request.security_level);
+			writer.close();
+		} catch (IOException e) {
+		}
 	}
 
 	public int compareTo(VM arg0) {

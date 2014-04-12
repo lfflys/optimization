@@ -31,7 +31,7 @@ public class BFD {
 	 */
 
 	public void energy_update(Cloud cloud, int t_event) {
-
+		double new_cost = 0;
 		for (Server cur_server: cloud.server_list) {
 			for (VM cur_vm: cur_server.vm_list) {
 				double cur_cost = 0.0;
@@ -46,12 +46,22 @@ public class BFD {
 					cur_vm.vm_suspendtime = cur_vm.vm_suspendtime + t_event - cur_vm.vm_lastevent;
 				}
 
-				cloud.total_cost = cloud.total_cost + cur_cost;
+				new_cost = new_cost + cur_cost;
 				cur_vm.vm_lastevent = t_event;
 			}
 		}
 
+		cloud.total_cost = cloud.total_cost + new_cost;
 		cloud.expect_cost = 0;
+                try {
+                        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt1", true)));
+                        writer.println(" ");
+                        writer.println("time: " + t_event + "	new_cost: " + new_cost);
+                        writer.close();
+                } catch (IOException e) {
+                }
+
+		cloud.display_cloud1();
 	}
 
 	/**

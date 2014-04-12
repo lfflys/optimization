@@ -10,6 +10,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.lang.Math;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.IOException;
+
 /**
  * 
  * @author Tianwei Zhang
@@ -86,6 +92,18 @@ public class Server {
 			VM dest_vm = new VM();
 			dest_vm.copy(src_vm);
 			vm_list.add(dest_vm);
+		}
+	}
+
+	public void display_server() {
+		try {
+			PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
+			writer.println("vm_id	memory	disk	network	sec	runtime");
+			for (int i = 0; i < vm_list.size(); i ++) {
+				writer.println(vm_list.get(i).vm_id + "	" + vm_list.get(i).vm_request.memory_size + "	" + vm_list.get(i).vm_request.disk_size + "	" + vm_list.get(i).vm_request.network_size + "	" + vm_list.get(i).vm_request.security_level + "	" + vm_list.get(i).vm_runtime);
+			}
+			writer.close();
+		} catch (IOException e) {
 		}
 	}
 }

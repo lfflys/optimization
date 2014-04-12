@@ -29,28 +29,30 @@ public class Main {
 
 	public static void main(String[] args) {
 
-		final int CLOUD_SERVER_NUM = 100;
+		final int CLOUD_SERVER_NUM = 10;
 		final int CLOUD_SECURITY_NUM = 4;
-		final int CLOUD_T_MIN = 0;
+		final int CLOUD_T_MIN = 10;
 		final int CLOUD_T_MAX = 10;
 		final int CLOUD_ST_MIN = 0;
 		final int CLOUD_ST_MAX = 1;
-		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0);
-		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1);
-		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
+		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0);
+		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0);
+		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 		final double CLOUD_MIGRATION_COST = 0.0;
-		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(4096, 8192, 16384, 32768, 65536);
+//		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(4096, 8192, 16384, 32768, 65536);
+		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(1024, 2048, 4096, 8192, 16384);
 		final List <Integer> CLOUD_DISK_SIZE = Arrays.asList(1024, 2048, 4096);
 		final List <Integer> CLOUD_NETWORK_SIZE = Arrays.asList(100, 200, 300, 400);
 
-		List <Integer> VM_MEMORY_SIZE = Arrays.asList(64, 128, 256, 512, 1024, 2048, 4096); //MB
+//		List <Integer> VM_MEMORY_SIZE = Arrays.asList(64, 128, 256, 512, 1024, 2048, 4096); //MB
+		List <Integer> VM_MEMORY_SIZE = Arrays.asList(1024, 2048, 4096); //MB
 		List <Integer> VM_DISK_SIZE = Arrays.asList(0, 1, 20, 40, 80, 160);  //GB
 		List <Integer> VM_NETWORK_SIZE = Arrays.asList(1, 2, 3);
 		double VM_SUSPEND_PROB = 0.0;
 		double VM_CHANGE_PROB = 0.0;
-		int VM_LAUNCH_NUM = 20;
+		int VM_LAUNCH_NUM = 1;
 
-		int PERIOD = 100;
+		int PERIOD = 1000;
 
 		Cloud cloud = new Cloud ( 
 					CLOUD_SERVER_NUM, 
@@ -88,7 +90,7 @@ public class Main {
 
 		ArrayList<ArrayList<Activity>> tasks = new ArrayList<ArrayList<Activity>>();
 
-		for (int i=0; i<PERIOD + (CLOUD_T_MAX - CLOUD_T_MIN) + (CLOUD_ST_MAX - CLOUD_ST_MIN); i++) {
+		for (int i=0; i<PERIOD + CLOUD_T_MAX + CLOUD_ST_MAX; i++) {
 			ArrayList<Activity> cur_task = new ArrayList<Activity>();
 			tasks.add(cur_task);
 		}
@@ -96,13 +98,15 @@ public class Main {
 		System.out.println("******************** Simulation begin ********************");
 
 		for (int i=0; i<PERIOD; i++) {
-			int vm_launch_num = (int)(Math.random() * VM_LAUNCH_NUM);
+//			int vm_launch_num = (int)(Math.random() * VM_LAUNCH_NUM);
+			int vm_launch_num = VM_LAUNCH_NUM;
 			vm_total_num = vm_total_num + vm_launch_num;
 			for (int j=0; j<vm_launch_num; j++) {
 				int memory_size = VM_MEMORY_SIZE.get((int)(Math.random()*VM_MEMORY_SIZE.size()));
 				int disk_size = VM_DISK_SIZE.get((int)(Math.random()*VM_DISK_SIZE.size()));
 				int network_size = VM_NETWORK_SIZE.get((int)(Math.random()*VM_NETWORK_SIZE.size()));
-				int security_level = (int)(Math.random()*CLOUD_SECURITY_NUM);
+//				int security_level = (int)(Math.random()*CLOUD_SECURITY_NUM);
+				int security_level = 0;
 
 				VM vm = new VM(vmid, memory_size, disk_size, network_size, security_level, i);
 
@@ -145,10 +149,12 @@ public class Main {
 					}
 					tasks.get(vm_change).add(change_activity);
 				}
+				tasks.get(vm_terminate).add(terminate_activity);
 				vmid = vmid + 1;
 			}
+		}
 
-
+		for (int i=0; i<PERIOD + CLOUD_T_MAX + CLOUD_ST_MAX; i++) {
 			optimizer.energy_update(cloud, i);
 			random.energy_update(cloud_random, i);
 			bfd.energy_update(cloud_bfd, i);
@@ -258,7 +264,7 @@ public class Main {
 
 		if (res != -1) {
 			try {
-				PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
+				PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt2", true)));
 				writer.println("optimization	" + vm_total_num + "	" + cloud.total_cost + "	" + cloud.total_cost/vm_total_num);
 				writer.println("random	" + vm_total_num + "	" + cloud_random.total_cost + "	" + cloud_random.total_cost/vm_total_num);
 				writer.println("bfd	" + vm_total_num + "	" + cloud_bfd.total_cost + "	" + cloud_bfd.total_cost/vm_total_num);
