@@ -29,14 +29,14 @@ public class Main {
 
 	public static void main(String[] args) {
 
-		final int CLOUD_SERVER_NUM = 100;
+		final int CLOUD_SERVER_NUM = 10;
 		final int CLOUD_SECURITY_NUM = 4;
 		final int CLOUD_T_MIN = 10;
 		final int CLOUD_T_MAX = 10;
-		final int CLOUD_ST_MIN = 0;
-		final int CLOUD_ST_MAX = 1;
+		final int CLOUD_ST_MIN = 2;
+		final int CLOUD_ST_MAX = 2;
 		final List <Double> CLOUD_MEMORY_COST = Arrays.asList(1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0);
-		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.0);
+		final List <Double> CLOUD_DISK_COST = Arrays.asList(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0);
 		final List <Double> CLOUD_NETWORK_COST = Arrays.asList(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 		final double CLOUD_MIGRATION_COST = 0.0;
 //		final List <Integer> CLOUD_MEMORY_SIZE = Arrays.asList(4096, 8192, 16384, 32768, 65536);
@@ -49,8 +49,8 @@ public class Main {
 		List <Integer> VM_DISK_SIZE = Arrays.asList(0, 1, 20, 40, 80, 160);  //GB
 		List <Integer> VM_NETWORK_SIZE = Arrays.asList(1, 2, 3);
 		double VM_SUSPEND_PROB = 0.0;
-		double VM_CHANGE_PROB = 0.0;
-		int VM_LAUNCH_NUM = 10;
+		double VM_CHANGE_PROB = 0.1;
+		int VM_LAUNCH_NUM = 1;
 
 		int PERIOD = 1000;
 
@@ -158,7 +158,16 @@ public class Main {
 			optimizer.energy_update(cloud, i);
 			random.energy_update(cloud_random, i);
 			bfd.energy_update(cloud_bfd, i);
+
 			for (Activity cur_activity:tasks.get(i)) {
+
+//                        try {
+//                                PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
+//				writer.println("At time: " + i + "	VM: " + cur_activity.vm.vm_id + "	Action: " + cur_activity.action);
+//                                writer.close();
+//                        } catch (IOException e) {
+//                        }
+
 				Activity cur_activity_random = new Activity();
 				cur_activity_random.copy(cur_activity);
 				Activity cur_activity_bfd = new Activity();
@@ -262,7 +271,7 @@ public class Main {
 			}
 		}
 
-		if (res != -1) {
+		if ((res != -1)&&(res_random != -1)&&(res_bfd != -1)) {
 			try {
 				PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
 				writer.println("optimization	" + vm_total_num + "	" + cloud.total_cost + "	" + cloud.total_cost/vm_total_num);

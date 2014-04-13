@@ -249,12 +249,6 @@ public class Random {
 
 		cur_vm.vm_state = 1;
 
-		if ( (cur_vm.vm_request.memory_size > (cur_server.memory_size - cur_server.memory_usage)) ||
-		     (cur_vm.vm_request.disk_size > (cur_server.disk_size - cur_server.disk_usage)) ||
-		     (cur_vm.vm_request.network_size > (cur_server.network_size - cur_server.network_usage)) || 
-		     (cur_vm.vm_request.security_level > cur_server.security_level)) {
-			return -1;
-		}
 		return 0;
 	}
 }

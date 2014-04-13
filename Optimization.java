@@ -62,6 +62,8 @@ public class Optimization {
  	 *
  	 */
 	public int optimization_launch(Cloud cloud, VM vm, int t_event) {
+//		cloud.display_cloud();
+//		vm.display_vm();
 		// Make sure static_cost and dynamic_cost is large enough.
 		double static_cost = 100000000.0;
 		double dynamic_cost = 100000000.0;
@@ -77,7 +79,7 @@ public class Optimization {
 				int stay_disk = vm.vm_request.disk_size;
 				int stay_network = vm.vm_request.network_size;
 				for(VM cur_vm:cloud.server_list.get(i).vm_list){
-					if (cur_vm.vm_request.memory_size >= vm.vm_request.memory_size) {
+					if ((cur_vm.vm_request.memory_size >= vm.vm_request.memory_size)||(cur_vm.vm_state == 2)) {
 						stay_memory = stay_memory + cur_vm.vm_request.memory_size;
 						stay_disk = stay_disk + cur_vm.vm_request.disk_size;
 						stay_network = stay_network + cur_vm.vm_request.network_size;
@@ -117,7 +119,7 @@ public class Optimization {
 				int stay_disk = vm.vm_request.disk_size;
 				int stay_network = vm.vm_request.network_size;
 				for(VM cur_vm:cloud.server_list.get(i).vm_list){
-					if (cur_vm.vm_request.memory_size >= vm.vm_request.memory_size) {
+					if ((cur_vm.vm_request.memory_size >= vm.vm_request.memory_size)||(cur_vm.vm_state == 2)) {
 						stay_memory = stay_memory + cur_vm.vm_request.memory_size;
 						stay_disk = stay_disk + cur_vm.vm_request.disk_size;
 						stay_network = stay_network + cur_vm.vm_request.network_size;
@@ -149,6 +151,14 @@ public class Optimization {
 			}
 
 		}
+
+//                try {
+//                        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
+//                        writer.println("dynamic_index: " + dynamic_index + "	static_index: " + static_index);
+//			writer.println("	");
+//                        writer.close();
+//                } catch (IOException e) {
+//                }
 
 		// This cloud system is full and no available server can satisfy the VM any more.
 		if (dynamic_index == -1) {
@@ -255,6 +265,7 @@ public class Optimization {
 				cloud_dynamic.server_list.get(dynamic_index).disk_usage = cloud_dynamic.server_list.get(dynamic_index).disk_usage + vm.vm_request.disk_size;
 			}
 			cloud_dynamic.server_list.get(dynamic_index).vm_list.add(vm);
+		
 
 			while (true) {
 				Collections.sort(cloud_dynamic.server_list.get(dynamic_index).vm_list);
@@ -267,7 +278,7 @@ public class Optimization {
 					double cur_vm_cost = 0.0;
 					int expect_time = 0;
 					if (cur_vm.vm_state == 1) {
-						cloud_dynamic.server_list.get(dynamic_index).memory_usage = cloud_dynamic.server_list.get(dynamic_index).memory_size - cur_vm.vm_request.memory_size;
+						cloud_dynamic.server_list.get(dynamic_index).memory_usage = cloud_dynamic.server_list.get(dynamic_index).memory_usage - cur_vm.vm_request.memory_size;
 						cloud_dynamic.server_list.get(dynamic_index).disk_usage = cloud_dynamic.server_list.get(dynamic_index).disk_usage - cur_vm.vm_request.disk_size;
 						cloud_dynamic.server_list.get(dynamic_index).network_usage = cloud_dynamic.server_list.get(dynamic_index).network_usage - cur_vm.vm_request.network_size;
 						expect_time = cur_vm.vm_runtime < cloud_dynamic.t_min ? (cloud_dynamic.t_max + cloud_dynamic.t_min - 2 * cur_vm.vm_runtime)/2 : (cloud_dynamic.t_max - cur_vm.vm_runtime)/2;
@@ -497,9 +508,11 @@ public class Optimization {
 		cloud_dynamic.total_cost = cloud_dynamic.total_cost + cur_migration_cost;
 		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost + cur_migration_cost;
 
+		cloud_dynamic.server_list.get(i).disk_usage = cloud_dynamic.server_list.get(i).disk_usage - cur_vm.vm_request.disk_size;
+
 		res = optimization_launch(cloud_dynamic, vm_dynamic, t_event);
 
-		if ((res == -1)||(cloud.expect_cost < cloud_dynamic.expect_cost)) {
+		if ((res == -1)||(cloud.expect_cost <= cloud_dynamic.expect_cost)) {
 			return 0;
 		}
 		else {
@@ -553,7 +566,9 @@ public class Optimization {
 		cloud.server_list.get(i).network_usage = cloud.server_list.get(i).network_usage + cur_vm.vm_request.network_size;
 
 		cloud_dynamic.total_cost = cloud_dynamic.total_cost + cur_migration_cost;
-		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost = cur_migration_cost;
+		cloud_dynamic.expect_cost = cloud_dynamic.expect_cost + cur_migration_cost;
+
+		cloud_dynamic.server_list.get(i).disk_usage = cloud_dynamic.server_list.get(i).disk_usage - cur_vm.vm_request.disk_size;
 
 		res = optimization_launch(cloud_dynamic, vm_dynamic, t_event);
 

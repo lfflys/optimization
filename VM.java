@@ -72,16 +72,16 @@ public class VM implements Comparable<VM> {
 	public void display_vm() {
 		try{
 			PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("result.txt", true)));
-			writer.println("id	memory	disk	network	sec");
-			writer.println(vm_id + "	" + vm_request.memory_size + "	" + vm_request.disk_size + "	" + vm_request.network_size + "	" + vm_request.security_level);
+			writer.println("vmid	memory	disk	network	sec	state");
+			writer.println(vm_id + "	" + vm_request.memory_size + "	" + vm_request.disk_size + "	" + vm_request.network_size + "	" + vm_request.security_level + vm_state);
 			writer.close();
 		} catch (IOException e) {
 		}
 	}
 
 	public int compareTo(VM arg0) {
-		return this.vm_request.memory_size < arg0.vm_request.memory_size ? -1
-		     : this.vm_request.memory_size > arg0.vm_request.memory_size ? 1
+		return ((this.vm_state < arg0.vm_state) || ((this.vm_request.memory_size < arg0.vm_request.memory_size) && (this.vm_state == arg0.vm_state)))? -1
+		     : ((this.vm_state > arg0.vm_state) || ((this.vm_request.memory_size > arg0.vm_request.memory_size) && (this.vm_state == arg0.vm_state)))? 1
 		     : 0;
 	}
 }
